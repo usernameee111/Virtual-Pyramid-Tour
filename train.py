@@ -154,6 +154,17 @@ def play_voice_once(key, path):
         sound = pygame.mixer.Sound(path)
         sound.play()
         played_audio.add(key)
+
+# ---------------------------------------------------------------
+# TIMER
+# ---------------------------------------------------------------
+import time
+
+time_limit = 60  
+start_time = None
+time_up = False
+
+
 # ---------------------------------------------------------------
 # WINDOW
 # ---------------------------------------------------------------
@@ -201,6 +212,18 @@ fade = 255
 frame = 0
 zoom = 0
 inside_from = 1
+unlock_frame = 0
+
+symbols = [
+    ("A", "bird"),
+    ("R", "eye"),
+    ("S", "snake"),
+    ("E", "leaf")
+]
+
+correct_code = ["A","R","S","E"]
+
+player_input = []
 
 # ---------------------------------------------------------------
 # DUST PARTICLES
@@ -550,6 +573,84 @@ def khafre():
     screen.blit(big_font.render("Scene 2 : Khafre", True, WHITE), (440,40))
     button("RIGHT ARROW → Next")
 
+# ---------------------------------------------------------------
+# PUZZLE STATE
+# ---------------------------------------------------------------
+puzzle = [1,2,3,
+          4,5,6,
+          7,8,0]  # 0 = empty
+
+import random
+random.shuffle(puzzle)
+
+tile_size = 80
+puzzle_x = 460
+puzzle_y = 200
+
+puzzle_solved = False
+
+
+def draw_symbols():
+    for i, (letter, shape) in enumerate(symbols):
+
+        x = puzzle_x + i * (tile_size + 20)
+        y = puzzle_y
+
+        pygame.draw.rect(screen, (230,200,150), (x,y,tile_size,tile_size), border_radius=10)
+        pygame.draw.rect(screen, (60,40,20), (x,y,tile_size,tile_size), 2, border_radius=10)
+
+        # رسم بسيط للرموز (بدون صور)
+        if shape == "bird":
+            pygame.draw.circle(screen, BLACK, (x+40,y+40), 15)
+
+        elif shape == "eye":
+            pygame.draw.ellipse(screen, BLACK, (x+20,y+30,40,20), 2)
+
+        elif shape == "snake":
+            pygame.draw.line(screen, BLACK, (x+20,y+60),(x+60,y+20),3)
+
+        elif shape == "leaf":
+            pygame.draw.polygon(screen, BLACK, [(x+40,y+20),(x+60,y+60),(x+20,y+60)])
+
+
+def click_symbol(index):
+    global player_input, puzzle_solved, scene
+
+    player_input.append(symbols[index][0])
+
+    # لو طول الإدخال أكبر من المطلوب → reset
+    if len(player_input) > len(correct_code):
+        player_input = []
+
+    # تحقق
+    if player_input == correct_code:
+        puzzle_solved = True
+        scene = 7
+
+
+def draw_timer():
+    global time_up
+
+    if start_time is None:
+        return
+
+    elapsed = int(time.time() - start_time)
+    remaining = max(0, time_limit - elapsed)
+
+    # لو الوقت خلص
+    if remaining == 0:
+        time_up = True
+
+    # لون حسب الوقت
+    color = (255,255,255)
+    if remaining <= 10:
+        color = (255,50,50)  # أحمر خطر
+
+    txt = mid_font.render(f"Time: {remaining}s", True, color)
+    screen.blit(txt, (50, 40))
+
+################################################################
+
 def menkaure():
     sunx = base_world()
     pyramid(430,540,270,220,(190,150,100), sunx)
@@ -569,6 +670,7 @@ def menkaure():
 
 def ending():
     base_world()
+    play_voice_once("end", "assest/end.mp3")
     screen.blit(title_font.render("Thank You For Visiting Egypt", True, WHITE), (250,300))
     screen.blit(big_font.render("History Still Breathes Here.", True, GOLD), (390,390))
     button("Press R To Restart")
@@ -583,9 +685,10 @@ def torch_flame(x,y):
     pygame.draw.circle(screen,(255,120,30),(x,y+flick+2),10)
 
 def interior_scene():
-
+    txt = mid_font.render("Your Code: " + "".join(player_input), True, WHITE)
+    screen.blit(txt, (450, 180))
     screen.fill((28,22,18))
-
+    draw_timer()
     # -----------------------------------------------------------
     # SIDE WALLS
     # -----------------------------------------------------------
@@ -626,11 +729,40 @@ def interior_scene():
     pygame.draw.rect(screen,(40,40,40),(500,520,220,70),2)
 
     # -----------------------------------------------------------
-    # ARTIFACTS
+    # PUZZLE (يتترسم بعد الخلفية)
     # -----------------------------------------------------------
-    pygame.draw.ellipse(screen,(150,100,60),(260,560,35,45))
-    pygame.draw.ellipse(screen,(150,100,60),(930,560,35,45))
+    draw_symbols()
+    if not puzzle_solved:
+        txt = mid_font.render("Solve the puzzle to unlock the chamber", True, BROWN)
+        screen.blit(txt, (380, 150))
+    else:
+        txt = mid_font.render("Chamber Unlocked!", True, (0,255,120))
+        screen.blit(txt, (450, 150))
 
+    if time_up:
+    
+       overlay = pygame.Surface((WIDTH, HEIGHT))
+       overlay.fill((0,0,0))
+       overlay.set_alpha(180)
+       screen.blit(overlay, (0,0))
+
+       play_voice_once("fail", "assest/fail.mp3") 
+
+       # ===== نصوص مرتبة في المنتصف =====
+
+       title = big_font.render("You Failed!", True, (255,50,50))
+       hint1 = mid_font.render("Press R to Restart", True, (255,255,255))
+       hint2 = mid_font.render("Press ESC to Exit", True, (255,255,255))
+
+       # حساب التمركز
+       title_rect = title.get_rect(center=(WIDTH//2, HEIGHT//2 - 60))
+       hint1_rect = hint1.get_rect(center=(WIDTH//2, HEIGHT//2))
+       hint2_rect = hint2.get_rect(center=(WIDTH//2, HEIGHT//2 + 40))
+
+       # رسم
+       screen.blit(title, title_rect)
+       screen.blit(hint1, hint1_rect)
+       screen.blit(hint2, hint2_rect)
     # -----------------------------------------------------------
     # GUIDE POSITION (85%,90%)
     # -----------------------------------------------------------
@@ -649,16 +781,148 @@ def interior_scene():
         "Burial rituals occurred here."
     ], gx, gy)
 
+    play_voice_once("room", "assest/room.mp3") 
     # -----------------------------------------------------------
     # TITLE
     # -----------------------------------------------------------
-    title = big_font.render("Inside The Pyramid", True, WHITE)
+    title = big_font.render("Inside The Pyramid", True, BROWN)
     screen.blit(title, (420,30))
 
     # -----------------------------------------------------------
     # RETURN BUTTON
     # -----------------------------------------------------------
-    button("ESC → Return")
+    if puzzle_solved:
+        button("ESC → Return")
+    else:
+        button("Solve Puzzle First!")
+
+
+def unlock_scene():
+    global unlock_frame, scene
+
+    screen.fill((10,10,10))
+
+    # اهتزاز خفيف (Shake effect)
+    shake_x = random.randint(-3,3)
+    shake_y = random.randint(-3,3)
+
+    # ضوء بيكبر تدريجياً
+    glow = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    radius = min(10 + unlock_frame*6, 500)
+
+    pygame.draw.circle(glow, (255,200,100,120), (WIDTH//2, HEIGHT//2), radius)
+    screen.blit(glow, (0,0))
+
+    # نص فتح الغرفة
+    txt = big_font.render("Ancient Chamber Unlocked!", True, (255,215,90))
+    screen.blit(txt, (WIDTH//2 - 180 + shake_x, HEIGHT//2 - 50 + shake_y))
+
+    # صوت مرة واحدة
+    play_voice_once("unlock", "assest/pass.mp3")
+
+    unlock_frame += 1
+
+    # بعد ثواني ننتقل تلقائي
+    if unlock_frame > 80:
+        scene = 8   # يرجع داخل الغرفة (أو أي reward scene)
+        unlock_frame = 0
+
+# ---------------------------------------------------------------
+# TREASURE SCENE (Scene 8)
+# ---------------------------------------------------------------
+def treasure_scene():
+
+    screen.fill((10, 8, 5))
+
+    # -----------------------------
+    # جدران مظلمة
+    # -----------------------------
+    pygame.draw.rect(screen, (40,35,25), (0,0,WIDTH,HEIGHT))
+
+    # -----------------------------
+    # أرضية
+    # -----------------------------
+    pygame.draw.rect(screen, (70,55,40), (0,500,WIDTH,250))
+
+    # -----------------------------
+    # توهج ذهبي
+    # -----------------------------
+    glow = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+
+    for i in range(5):
+        pygame.draw.circle(
+            glow,
+            (255, 215, 90, 40),
+            (WIDTH//2, 480),
+            120 + i*40
+        )
+
+    screen.blit(glow, (0,0))
+
+    # -----------------------------
+    # صندوق الكنز
+    # -----------------------------
+    chest_x = WIDTH//2 - 120
+    chest_y = 430
+
+    # جسم الصندوق
+    pygame.draw.rect(screen, (120,85,40), (chest_x, chest_y, 240, 120))
+    pygame.draw.rect(screen, (80,60,30), (chest_x, chest_y, 240, 120), 3)
+
+    # الغطاء (مفتوح)
+    pygame.draw.rect(screen, (140,100,50), (chest_x, chest_y-60, 240, 60))
+    pygame.draw.rect(screen, (80,60,30), (chest_x, chest_y-60, 240, 60), 3)
+
+    # -----------------------------
+    # الذهب (جوا الصندوق)
+    # -----------------------------
+    for i in range(20):
+        gx = chest_x + 20 + (i%5)*40
+        gy = chest_y + 20 + (i//5)*20
+        pygame.draw.circle(screen, (255,215,0), (gx,gy), 8)
+
+    # -----------------------------
+    # جواهر
+    # -----------------------------
+    pygame.draw.circle(screen, (0,255,200), (chest_x+60, chest_y+40), 10)
+    pygame.draw.circle(screen, (255,0,100), (chest_x+160, chest_y+60), 10)
+    pygame.draw.circle(screen, (100,200,255), (chest_x+120, chest_y+30), 10)
+
+    # -----------------------------
+    # بريق متحرك ✨
+    # -----------------------------
+    for _ in range(15):
+        x = random.randint(chest_x, chest_x+240)
+        y = random.randint(chest_y-80, chest_y)
+        pygame.draw.circle(screen, (255,255,200), (x,y), 2)
+
+    # -----------------------------
+    # النصوص
+    # -----------------------------
+    title = big_font.render("Treasure Discovered!", True, GOLD)
+    screen.blit(title, (WIDTH//2 - 180, 120))
+
+    msg = mid_font.render("You unlocked the secrets of the pyramid", True, WHITE)
+    screen.blit(msg, (WIDTH//2 - 220, 180))
+
+    # -----------------------------
+    # المرشد
+    # -----------------------------
+    gx = int(WIDTH * 0.85)
+    gy = int(HEIGHT * 0.90)
+
+    guide(gx, gy)
+
+    bubble([
+        "Incredible!",
+        "You found the hidden treasure!",
+        "Ancient riches are yours."
+    ], gx, gy)
+
+    # -----------------------------
+    # زر الرجوع
+    # -----------------------------
+    button("Press R → Restart | ESC → Exit")  
 # ---------------------------------------------------------------
 # ZOOM TRANSITION
 # ---------------------------------------------------------------
@@ -668,7 +932,7 @@ def interior_scene():
 # ===============================================================
 
 def zoom_transition():
-    global zoom, scene
+    global zoom, scene, start_time, time_up
 
     draw_sun()
 
@@ -702,6 +966,8 @@ def zoom_transition():
     if zoom >= 18:
         zoom = 0
         scene = 5
+        start_time = time.time()   # ⏱️ start timer
+        time_up = False
         reset_fade()
         
 # ---------------------------------------------------------------
@@ -720,16 +986,15 @@ while running:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
 
-            mx,my = pygame.mouse.get_pos()
+            if scene == 5 and not puzzle_solved:
+               mx, my = pygame.mouse.get_pos()
 
-            if scene in [1,2,3]:
+               for i in range(len(symbols)):
+                   x = puzzle_x + i * (tile_size + 20)
+                   y = puzzle_y
 
-                # click pyramid area
-                if 220 <= mx <= 760 and 160 <= my <= 540:
-                    inside_from = scene
-                    scene = 6
-                    zoom = 0
-                    reset_fade()
+                   if x <= mx <= x+tile_size and y <= my <= y+tile_size:
+                      click_symbol(i)
 
         if event.type == pygame.KEYDOWN:
 
@@ -754,6 +1019,16 @@ while running:
             elif scene == 5 and event.key == pygame.K_ESCAPE:
                 scene = inside_from
                 reset_fade()
+            elif scene == 8 and event.key == pygame.K_r:
+                scene = 0
+                reset_fade()
+            # ⭐ هنا تضيف الكود بتاع الريست بعد الخسارة
+            if event.key == pygame.K_r and time_up:
+               puzzle_solved = False
+               time_up = False
+               puzzle[:] = [1,2,3,4,5,6,7,8,0]
+               random.shuffle(puzzle)
+               start_time = time.time()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
 
@@ -787,6 +1062,10 @@ while running:
         interior_scene()
     elif scene == 6:
         zoom_transition()
+    elif scene == 7:
+        unlock_scene()
+    elif scene == 8:
+        treasure_scene()
 
     fade_in()
     pygame.display.update()
