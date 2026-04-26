@@ -155,6 +155,10 @@ def play_voice_once(key, path):
         sound.play()
         played_audio.add(key)
 
+# object
+
+
+
 # ---------------------------------------------------------------
 # TIMER
 # ---------------------------------------------------------------
@@ -179,12 +183,34 @@ pygame.display.set_caption("Living Pyramid Tour")
 
 clock = pygame.time.Clock()
 
+
+# --------------------------------------------------
+# First Background
+# ------------------------------------------
+intro_bg = pygame.image.load("assest/images/first_background.png")
+def scale_background(img, screen_w, screen_h):
+    img_w, img_h = img.get_size()
+
+    scale = min(screen_w / img_w, screen_h / img_h)
+
+    new_w = int(img_w * scale)
+    new_h = int(img_h * scale)
+
+    return pygame.transform.smoothscale(img, (new_w, new_h))
+
+intro_bg = scale_background(intro_bg, WIDTH, HEIGHT)
+
+
+
+
+
 # ---------------------------------------------------------------
 # FONTS
 # ---------------------------------------------------------------
-title_font = pygame.font.SysFont("georgia", 44, True)
+title_font = pygame.font.SysFont("timesnewroman", 48, True)
+mid_font   = pygame.font.SysFont("georgia", 26)
 big_font   = pygame.font.SysFont("arial", 34, True)
-mid_font   = pygame.font.SysFont("timesnewroman", 26, True)
+# mid_font   = pygame.font.SysFont("timesnewroman", 26, True)
 small_font = pygame.font.SysFont("arial", 20)
 
 # ---------------------------------------------------------------
@@ -192,14 +218,20 @@ small_font = pygame.font.SysFont("arial", 20)
 # ---------------------------------------------------------------
 BLACK=(0,0,0)
 WHITE=(255,255,255)
-GOLD=(255,215,90)
-SAND=(232,202,154)
-DARK_SAND=(178,140,92)
+GOLD = (255, 200, 90)
+SAND = (210, 180, 120)
+DARK_SAND = (180, 150, 100)
 BROWN=(148,108,72)
-SHADOW=(70,50,25)
+SHADOW = (40, 25, 15)
 GREEN=(45,180,75)
-SKY1=(35,55,120)
-SKY2=(255,170,90)
+SKY1 = (40, 60, 120)     # أزرق غامق هادي
+SKY2 = (255, 140, 60)    # برتقالي غروب
+MAIN_PYRAMID_COLOR = (185, 140, 85)
+LEFT_FACE_COLOR = (125, 95, 60)
+RIGHT_FACE_COLOR   = (220, 175, 110)
+
+CARD_COLOR = (40, 30, 20)   # بني غامق شيك
+CARD_BORDER = (200, 170, 110)
 
 # ---------------------------------------------------------------
 # STATES
@@ -256,7 +288,7 @@ def fade_in():
 
 def gradient():
     for y in range(HEIGHT):
-        t = y / HEIGHT
+        t = (y / HEIGHT) ** 1.3
         r = int(SKY1[0]*(1-t) + SKY2[0]*t)
         g = int(SKY1[1]*(1-t) + SKY2[1]*t)
         b = int(SKY1[2]*(1-t) + SKY2[2]*t)
@@ -320,40 +352,91 @@ def draw_dust():
 
 def pyramid(x, by, w, h, color, sunx):
 
-    key = (w,h,color)
+    key = (w, h, color)
 
+    # ---------------------------------
+    # BUILD ONCE (CACHED)
+    # ---------------------------------
     if key not in pyramid_cache:
 
-        surf = pygame.Surface((w+220,h+120), pygame.SRCALPHA)
+        surf = pygame.Surface((w, h), pygame.SRCALPHA)
 
         old_screen = screen
         globals()['screen'] = surf
 
-        p1 = (0,h)
-        p2 = (w,h)
-        p3 = (w//2,0)
+        # -----------------------
+        # GEOMETRY
+        # -----------------------
+        left  = (0, h)
+        right = (w, h)
 
-        scanline_fill_triangle(p1,p2,p3,color)
+        top   = (int(w * 0.45), 0)   # قمة مش في النص
+        ridge = int(w * 0.32)        # الخط الفاصل شمال شوية
 
-        bresenham_line(*p1,*p2,BLACK)
-        bresenham_line(*p1,*p3,BLACK)
-        bresenham_line(*p2,*p3,BLACK)
+        base_mid = (ridge, h)
 
-        for i in range(16):
-            yy = h - (h/16)*i
-            lx = (w/2)*(i/16)
-            rx = w - (w/2)*(i/16)
+        # -----------------------
+        # COLORS (flat shading)
+        # -----------------------
+        left_color = LEFT_FACE_COLOR
 
-            dda_line(lx,yy,rx,yy,DARK_SAND)
 
+        right_color = RIGHT_FACE_COLOR
+
+        # -----------------------
+        # FILL (SCANLINE)
+        # -----------------------
+        scanline_fill_triangle(left, base_mid, top, left_color)
+        scanline_fill_triangle(base_mid, right, top, right_color)
+
+        # -----------------------
+        # EDGES (BRESENHAM)
+        # -----------------------
+        edge_color = (60,40,20)
+
+        bresenham_line(*left, *top, edge_color)
+        bresenham_line(*top, *right, edge_color)
+        bresenham_line(*left, *right, edge_color)
+
+        # -----------------------
+        # BLOCK LINES (DDA)
+        # -----------------------
+        layers = 10
+
+        for i in range(1, layers):
+
+            y = h - (h/layers)*i
+            ratio = y / h
+
+            # -------- نقاط حقيقية من الأضلاع --------
+            # على الضلع الشمال (left → top)
+            x_left = int(left[0] + (top[0] - left[0]) * (1 - ratio))
+
+            # على الضلع اليمين (right → top)
+            x_right = int(right[0] + (top[0] - right[0]) * (1 - ratio))
+
+            # على ضلع ridge (base_mid → top)
+            x_ridge = int(base_mid[0] + (top[0] - base_mid[0]) * (1 - ratio))
+
+            # -------- رسم الوجه الشمال --------
+            dda_line(x_left, int(y), x_ridge, int(y), (150,120,80))
+
+            # -------- رسم الوجه اليمين --------
+            dda_line(x_ridge, int(y), x_right, int(y), (170,135,90))
+            # -----------------------
+        # SAVE CACHE
+        # -----------------------
         globals()['screen'] = old_screen
-
         pyramid_cache[key] = surf
 
-    # draw cached pyramid
+    # ---------------------------------
+    # DRAW PYRAMID
+    # ---------------------------------
     screen.blit(pyramid_cache[key], (x, by-h))
 
-    # dynamic shadow only
+    # ---------------------------------
+    # SHADOW (واضح وواقعي)
+    # ---------------------------------
     shadow_len = 90 + (sunx/10)
 
     pygame.draw.polygon(screen, SHADOW, [
@@ -483,54 +566,82 @@ def base_world():
     flag(1100, 540)
     return sunx
 
+def bg_intro_():
+    bg_x = (WIDTH - intro_bg.get_width()) // 2
+    bg_y = (HEIGHT - intro_bg.get_height()) // 2
+    screen.blit(intro_bg, (bg_x, bg_y))    
+
 # ---------------------------------------------------------------
 # EXTERIOR SCENES
 # ---------------------------------------------------------------
 def intro():
-    base_world()
+    bg_intro_()
     # 🔊 تشغيل الصوت مرة واحدة
     play_voice_once("intro", "assest/intro.mp3")
-    # تعريف المستطيل (اللوحة)
+    # -------------------------------------------------
+    # CARD (رجوع للستايل السينمائي الصح)
+    # -------------------------------------------------
     panel_rect = pygame.Rect(250, 180, 700, 300)
-    pygame.draw.rect(screen, (245, 220, 170), panel_rect, border_radius=20)
-    DARK_BROWN = (60, 40, 20)  
-    pygame.draw.rect(screen, DARK_BROWN, panel_rect, 3, border_radius=20)
 
-    # 1. عنوان اللوحة (توسيط تلقائي)
-    title_surf = title_font.render("Welcome to the Giza Plateau", True, DARK_BROWN)
-    # نضع مركز نص العنوان في مركز المستطيل عرضياً، ونرفعه قليلاً للأعلى
-    title_rect = title_surf.get_rect(center=(panel_rect.centerx, panel_rect.top + 70))
+    panel = pygame.Surface((700, 300), pygame.SRCALPHA)
+    panel.fill((25, 18, 12, 210))  # بني غامق شفاف
+
+    screen.blit(panel, (250, 180))
+
+    # border ذهبي هادي
+    pygame.draw.rect(screen, (180, 140, 90), panel_rect, 2, border_radius=20)
+
+    # -------------------------------------------------
+    # COLORS
+    # -------------------------------------------------
+    TITLE_COLOR = (255, 230, 170)   # ذهبي فاتح
+    SUB_COLOR   = (210, 180, 130)
+    TEXT_COLOR  = (235, 215, 180)
+    ACCENT      = (255, 120, 80)
+
+    # -------------------------------------------------
+    # TITLE (shadow ناعم)
+    # -------------------------------------------------
+    title = "Welcome to the Giza Plateau"
+
+    shadow = title_font.render(title, True, (0,0,0))
+    title_surf = title_font.render(title, True, TITLE_COLOR)
+
+    title_rect = title_surf.get_rect(center=(panel_rect.centerx, panel_rect.top + 75))
+
+    screen.blit(shadow, (title_rect.x+2, title_rect.y+2))
     screen.blit(title_surf, title_rect)
 
-    # 2. النص الفرعي (توسيط تلقائي)
-    GOLD_TITLE = (218, 165, 32)
-    sub_surf = mid_font.render("'A Living Journey Through Ancient Egypt'", True, GOLD_TITLE)
-    sub_rect = sub_surf.get_rect(center=(panel_rect.centerx, panel_rect.top + 160))
+    # -------------------------------------------------
+    # SUBTITLE
+    # -------------------------------------------------
+    sub_surf = mid_font.render("'A Living Journey Through Ancient Egypt'", True, SUB_COLOR)
+    sub_rect = sub_surf.get_rect(center=(panel_rect.centerx, panel_rect.top + 150))
     screen.blit(sub_surf, sub_rect)
 
-    # 3. تعليمات البدء (توسيط تلقائي)
-    part1_surf = mid_font.render("Press '", True, DARK_BROWN)
-    space_surf = mid_font.render("SPACE", True, (255, 0, 0))  # لون أزرق جذاب
-    part2_surf = mid_font.render("' to Begin your journy", True, DARK_BROWN)
-    # 2. حساب العرض الإجمالي لتوسيطهم معاً في المنتصف
-    total_width = part1_surf.get_width() + space_surf.get_width() + part2_surf.get_width()
-    start_x = panel_rect.centerx - (total_width // 2)
-    y_position = panel_rect.top + 230 # نفس الارتفاع السابق
+    # -------------------------------------------------
+    # START TEXT
+    # -------------------------------------------------
+    part1 = mid_font.render("Press '", True, TEXT_COLOR)
+    space = mid_font.render("SPACE", True, ACCENT)
+    part2 = mid_font.render("' to Begin your journey", True, TEXT_COLOR)
 
-    # 3. رسم الأجزاء بجانب بعضها البعض
-    screen.blit(part1_surf, (start_x, y_position))
-    screen.blit(space_surf, (start_x + part1_surf.get_width(), y_position))
-    screen.blit(part2_surf, (start_x + part1_surf.get_width() + space_surf.get_width(), y_position))
+    total_width = part1.get_width() + space.get_width() + part2.get_width()
+    start_x = panel_rect.centerx - total_width // 2
+    y = panel_rect.top + 230
 
+    screen.blit(part1, (start_x, y))
+    screen.blit(space, (start_x + part1.get_width(), y))
+    screen.blit(part2, (start_x + part1.get_width() + space.get_width(), y))
 def pyramids_overview():
     sunx = base_world()
 
 
-    pyramid(450, 540, 300, 240, (214,182,120), sunx)
+    pyramid(450, 540, 300, 240, MAIN_PYRAMID_COLOR, sunx)
 
-    pyramid(200, 540, 240, 190, (205,175,118), sunx)
+    pyramid(200, 540, 240, 190, MAIN_PYRAMID_COLOR, sunx)
 
-    pyramid(800, 540, 180, 140, (190,150,100), sunx)
+    pyramid(800, 540, 180, 140, MAIN_PYRAMID_COLOR, sunx)
 
     screen.blit(big_font.render("Giza Pyramids", True, WHITE), (495, 40))
 
@@ -538,7 +649,7 @@ def pyramids_overview():
 
 def khufu():
     sunx = base_world()
-    pyramid(250,540,450,350,(214,182,120), sunx)
+    pyramid(250,540,450,350,MAIN_PYRAMID_COLOR, sunx)
 
     gx, gy = 980, 540
     guide(gx, gy)
@@ -555,10 +666,7 @@ def khufu():
 
 def khafre():
     sunx = base_world()
-    pyramid(330,540,390,310,(205,175,118), sunx)
-
-    pygame.draw.polygon(screen, (230,230,220),
-        [(525,230),(485,295),(565,295)])
+    pyramid(330,540,390,310,MAIN_PYRAMID_COLOR, sunx)
 
     gx, gy = 980, 540
     guide(gx, gy)
