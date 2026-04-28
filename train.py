@@ -151,17 +151,17 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 voice_channel = pygame.mixer.Channel(0)
 current_sound = None
 
-overview_sound = pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/pyramids.mp3")
+overview_sound = pygame.mixer.Sound("assest/pyramids.mp3")
 overview_played = False
 
 # 👇 هنا تحطي الصور
-guide_img = pygame.image.load("Virtual-Pyramid-Tour/assest/guide.png").convert_alpha()
+guide_img = pygame.image.load("assest/guide.png").convert_alpha()
 guide_img = pygame.transform.smoothscale(guide_img, (160, 240))
 guide_img.set_colorkey((255, 255, 255))  # يشيل الأبيض
 
-khufu_sound = pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/khufu.mp3")
-khafre_sound = pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/khafre.mp3")
-menkaure_sound = pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/Menkaure.mp3")
+khufu_sound = pygame.mixer.Sound("assest/khufu.mp3")
+khafre_sound = pygame.mixer.Sound("assest/khafre.mp3")
+menkaure_sound = pygame.mixer.Sound("assest/Menkaure.mp3")
 menkaure_played = False
 # -----------------
 # =========================
@@ -195,15 +195,15 @@ class AudioManager:
         
 
 audio = AudioManager()
-audio.load("intro", "Virtual-Pyramid-Tour/assest/intro.mp3")
-audio.load("overview", "Virtual-Pyramid-Tour/assest/pyramids.mp3")
-audio.load("khufu", "Virtual-Pyramid-Tour/assest/khufu.mp3")
-audio.load("khafre", "Virtual-Pyramid-Tour/assest/khafre.mp3")
-audio.load("menkaure", "Virtual-Pyramid-Tour/assest/Menkaure.mp3")
-audio.load("room", "Virtual-Pyramid-Tour/assest/room.mp3")
-audio.load("unlock", "Virtual-Pyramid-Tour/assest/pass.mp3")
-audio.load("fail", "Virtual-Pyramid-Tour/assest/fail.mp3")
-audio.load("end", "Virtual-Pyramid-Tour/assest/end.mp3")        
+audio.load("intro", "assest/intro.mp3")
+audio.load("overview", "assest/pyramids.mp3")
+audio.load("khufu", "assest/khufu.mp3")
+audio.load("khafre", "assest/khafre.mp3")
+audio.load("menkaure", "assest/Menkaure.mp3")
+audio.load("room", "assest/room.mp3")
+audio.load("unlock", "assest/pass.mp3")
+audio.load("fail", "assest/fail.mp3")
+audio.load("end", "assest/end.mp3")        
 #voice
 played_audio = set()
 current_key = None
@@ -261,7 +261,7 @@ clock = pygame.time.Clock()
 # --------------------------------------------------
 # First Background
 # ------------------------------------------
-intro_bg = pygame.image.load("Virtual-Pyramid-Tour/assest/images/first_background.png")
+intro_bg = pygame.image.load("assest/images/first_background.png")
 def scale_background(img, screen_w, screen_h):
     img_w, img_h = img.get_size()
 
@@ -693,7 +693,7 @@ def play_sound_once(key, sound):
 
     current_scene_sound = key
     played_audio.add(key)
-intro_sound = pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/intro.mp3")
+intro_sound = pygame.mixer.Sound("assest/intro.mp3")
 
 
 def intro():
@@ -905,7 +905,7 @@ def menkaure():
 def ending():
     base_world()
 
-    play_sound_once("end", pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/end.mp3"))
+    play_sound_once("end", pygame.mixer.Sound("assest/end.mp3"))
 
     screen.blit(title_font.render("Thank You For Visiting Egypt", True, WHITE),
                 (250, 300))
