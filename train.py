@@ -233,15 +233,6 @@ def play_voice_once(key, sound):
 
     played_audio.add(key)
 
-# ---------------------------------------------------------------
-# TIMER
-# ---------------------------------------------------------------
-import time
-
-time_limit = 60  
-start_time = None
-time_up = False
-
 
 # ---------------------------------------------------------------
 # WINDOW
@@ -871,26 +862,6 @@ def click_answer(index):
     else:
         print("Wrong answer")
 
-def draw_timer():
-    global time_up
-
-    if start_time is None:
-        return
-
-    elapsed = int(time.time() - start_time)
-    remaining = max(0, time_limit - elapsed)
-
-    # لو الوقت خلص
-    if remaining == 0:
-        time_up = True
-
-    # لون حسب الوقت
-    color = (255,255,255)
-    if remaining <= 10:
-        color = (255,50,50)  # أحمر خطر
-
-    txt = mid_font.render(f"Time: {remaining}s", True, color)
-    screen.blit(txt, (50, 40))
 
 ################################################################
 def menkaure():
@@ -938,7 +909,6 @@ room_sound_played = False
 def interior_scene():
     global room_sound_played
     screen.fill((28,22,18))
-    draw_timer()
     # -----------------------------------------------------------
     # SIDE WALLS
     # -----------------------------------------------------------
@@ -988,30 +958,6 @@ def interior_scene():
         txt = mid_font.render("Chamber Unlocked!", True, (0,255,120))
         screen.blit(txt, (450, 150))
 
-    if time_up:
-    
-       overlay = pygame.Surface((WIDTH, HEIGHT))
-       overlay.fill((0,0,0))
-       overlay.set_alpha(180)
-       screen.blit(overlay, (0,0))
-
-       play_voice_once("fail", "assest/fail.mp3") 
-
-       # ===== نصوص مرتبة في المنتصف =====
-
-       title = big_font.render("You Failed!", True, (255,50,50))
-       hint1 = mid_font.render("Press R to Restart", True, (255,255,255))
-       hint2 = mid_font.render("Press ESC to Exit", True, (255,255,255))
-
-       # حساب التمركز
-       title_rect = title.get_rect(center=(WIDTH//2, HEIGHT//2 - 60))
-       hint1_rect = hint1.get_rect(center=(WIDTH//2, HEIGHT//2))
-       hint2_rect = hint2.get_rect(center=(WIDTH//2, HEIGHT//2 + 40))
-
-       # رسم
-       screen.blit(title, title_rect)
-       screen.blit(hint1, hint1_rect)
-       screen.blit(hint2, hint2_rect)
     # -----------------------------------------------------------
     # GUIDE POSITION (85%,90%)
     # -----------------------------------------------------------
@@ -1020,15 +966,6 @@ def interior_scene():
 
     guide(gx, gy)
 
-    # -----------------------------------------------------------
-    # INFO BOX ABOVE GUIDE
-    # -----------------------------------------------------------
-    bubble([
-        "Think carefully...",
-        "Not all symbols are easy.",
-        "Only one is correct.",
-        "Which one is 'H'?"
-    ], gx, gy)
 
     audio.play_once("roomm")
     
@@ -1164,12 +1101,6 @@ def treasure_scene():
 
     guide(gx, gy)
 
-    bubble([
-        "Incredible!",
-        "You found the hidden treasure!",
-        "Ancient riches are yours."
-    ], gx, gy)
-
     # -----------------------------
     # زر الرجوع
     # -----------------------------
@@ -1183,7 +1114,7 @@ def treasure_scene():
 # ===============================================================
 
 def zoom_transition():
-    global zoom, scene, start_time, time_up
+    global zoom, scene
 
     draw_sun()
 
@@ -1217,8 +1148,6 @@ def zoom_transition():
     if zoom >= 18:
         zoom = 0
         scene = 5
-        start_time = time.time()   # ⏱️ start timer
-        time_up = False
         reset_fade()
         
 # ---------------------------------------------------------------
@@ -1274,11 +1203,6 @@ while running:
             elif scene == 8 and event.key == pygame.K_r:
                 scene = 0
                 reset_fade()
-            # ⭐ هنا تضيف الكود بتاع الريست بعد الخسارة
-            if event.key == pygame.K_r and time_up:
-               puzzle_solved = False
-               time_up = False
-               start_time = time.time()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
 
