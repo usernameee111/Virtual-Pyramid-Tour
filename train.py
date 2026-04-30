@@ -543,92 +543,102 @@ def flag(x, y):
 # BUBBLE
 # ---------------------------------------------------------------
 def bubble(lines, guide_x, guide_y):
+    """
+    Professional dialogue box (final version)
+    Positioned beside the guide without covering him
+    """
 
     box_w = 600
     box_h = 200
     padding = 20
 
-    x = guide_x - box_w//2
-    y = guide_y - box_h - 80   # 👈 فوقه بمسافة
+    # 🎯 position (جنب الجايد + مرفوع لفوق)
+# 🎯 في نص الجايد أفقيًا
+    x = guide_x - box_w // 2 -100
 
+    # 🎯 فوق الجايد مباشرة
+    y = guide_y - box_h - 250
+        #safety (ما يطلعش برا الشاشة)
     if x < 20:
         x = 20
-    if x + box_w > WIDTH :
-        x = WIDTH - box_w - 20
+    if y < 20:
+        y = 20
 
-    # ===== BOX =====
+    # =========================
+    # 🌑 SHADOW (احترافي)
+    # =========================
+    shadow = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+    pygame.draw.rect(shadow, (0, 0, 0, 80),
+                     (0, 0, box_w, box_h),
+                     border_radius=12)
+    screen.blit(shadow, (x + 5, y + 5))
+
+    # =========================
+    # 📦 MAIN BOX
+    # =========================
     panel = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
 
     pygame.draw.rect(panel, (30, 20, 10, 230),
-                     (0,0,box_w,box_h),
-                     border_radius=10)
+                     (0, 0, box_w, box_h),
+                     border_radius=12)
 
-    pygame.draw.rect(panel, (60,40,20),
-                     (0,0,box_w,box_h),
-                     2, border_radius=10)
+    pygame.draw.rect(panel, (80, 55, 30),
+                     (0, 0, box_w, box_h),
+                     2, border_radius=12)
 
     screen.blit(panel, (x, y))
 
-    # ===== TEXT =====
-    max_text_width = box_w - padding*2
-    max_lines = (box_h - padding*2) // 24   # 👈 يمنع النزول تحت
+    # =========================
+    # 📝 TEXT WRAP
+    # =========================
+    max_text_width = box_w - padding * 2
+    max_lines = (box_h - padding * 2) // 24
 
     wrapped_lines = []
 
     for line in lines:
-        clean_line = clean_text(line)
-        wrapped_lines.extend(wrap_text(line, small_font, max_text_width))
+        clean_line = line.replace("\n", " ").strip()
+        wrapped_lines.extend(
+            wrap_text(clean_line, small_font, max_text_width)
+        )
 
-    # ✂️ قص الزيادة
     wrapped_lines = wrapped_lines[:max_lines]
 
+    # =========================
+    # ✍️ DRAW TEXT
+    # =========================
     line_y = y + padding
 
     for line in wrapped_lines:
-        txt = small_font.render(line.strip(), True, (240,220,180))
-
-        # 👇 left align بدل center
+        txt = small_font.render(line, True, (240, 220, 180))
         screen.blit(txt, (x + padding, line_y))
-
         line_y += 24
   # ---------------------------------------------------------------
 # BUTTON
 # ---------------------------------------------------------------
-def button(text, x=None, y=None):
-    # 📍 لو مفيش position → يستخدم القديم (fallback)
-    if x is None:
-        x = WIDTH//2 - 180
-    if y is None:
-        y = 665
+def button(text, align="right"):
+    box_w = 360
+    box_h = 50
+    y = 660
 
-    rect = pygame.Rect(x, y, 360, 50)
-
-    mx, my = pygame.mouse.get_pos()
-
-    hovered = rect.collidepoint(mx, my)
-
-    if hovered:
-        glow_color = (255, 240, 180)
-        scale = 1.05
+    # 🎯 تحديد المكان
+    if align == "right":
+        x = WIDTH - box_w - 40   # ناحية اليمين
     else:
-        glow_color = (200, 160, 90)
-        scale = 1.0
+        x = 40                   # ناحية الشمال
 
-    new_rect = rect.inflate(rect.width * (scale - 1), rect.height * (scale - 1))
+    rect = pygame.Rect(x, y, box_w, box_h)
 
-    # جسم الزر
-    pygame.draw.rect(screen, glow_color, new_rect, border_radius=12)
-    pygame.draw.rect(screen, (120, 80, 40), new_rect, 3, border_radius=12)
-
- 
-    arrow_move = 0  # ثابت
-    arrow = mid_font.render("→", True, (120, 90, 50))
-    screen.blit(arrow, (new_rect.right - 40, new_rect.centery - 15))
+    # الخلفية
+    panel = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+    pygame.draw.rect(panel, (210,170,110,220), (0,0,box_w,box_h), border_radius=12)
+    screen.blit(panel, (x,y))
+    # border
+    pygame.draw.rect(screen, (120, 80, 40), rect, 3, border_radius=12)
 
     # النص
-    txt = mid_font.render(text, True, (40, 30, 20))
-    screen.blit(txt, txt.get_rect(center=new_rect.center))
-# ---------------------------------------------------------------
+    txt = mid_font.render(text, True, (40,30,20))
+    screen.blit(txt, txt.get_rect(center=rect.center))# ---------------------------------------------------------------
 # WORLD
 # ---------------------------------------------------------------
 def base_world():
@@ -643,6 +653,9 @@ def bg_intro_():
     bg_x = (WIDTH - intro_bg.get_width()) // 2
     bg_y = (HEIGHT - intro_bg.get_height()) // 2
     screen.blit(intro_bg, (bg_x, bg_y))    
+
+
+
 
 # ---------------------------------------------------------------
 # EXTERIOR SCENES
@@ -696,45 +709,66 @@ def intro():
 
     audio.play_once("intro")
 
+    # 📦 إعدادات البوكس
+    panel_x = 250
+    panel_y = 180
+    panel_w = 700
+    panel_h = 300
+
+    center_x = panel_x + panel_w // 2
+
     # 🪟 البوكس الشفاف
-    panel = pygame.Surface((700, 300), pygame.SRCALPHA)
-    panel.fill((25, 15, 5, 160))  # شفاف غامق
+    panel = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
+    panel.fill((25, 15, 5, 160))
+    screen.blit(panel, (panel_x, panel_y))
 
-    screen.blit(panel, (250, 180))
+    pygame.draw.rect(screen, (255,220,150),
+                     (panel_x, panel_y, panel_w, panel_h),
+                     2, border_radius=20)
 
-    pygame.draw.rect(screen, (255,220,150), (250,180,700,300), 2, border_radius=20)
-
-    # TITLE
+    # =====================================================
+    # 🎬 TITLE (Centered + Glow + Shadow)
+    # =====================================================
     title_text = "Journey Into Ancient Egypt"
 
+    # shadow
     shadow = title_font.render(title_text, True, (0,0,0))
-    screen.blit(shadow, (302, 232))
+    shadow_rect = shadow.get_rect(center=(center_x + 2, panel_y + 70 + 2))
+    screen.blit(shadow, shadow_rect)
 
+    # glow
     glow = title_font.render(title_text, True, ACCENT)
-    screen.blit(glow, (298, 228))
+    glow_rect = glow.get_rect(center=(center_x - 2, panel_y + 70 - 2))
+    screen.blit(glow, glow_rect)
 
+    # main title
     title = title_font.render(title_text, True, GOLD)
-    screen.blit(title, (300, 230))
+    title_rect = title.get_rect(center=(center_x, panel_y + 70))
+    screen.blit(title, title_rect)
 
-
-    # SUBTITLE
+    # =====================================================
+    # ✨ SUBTITLE (Centered)
+    # =====================================================
     sub = mid_font.render(
         "Where Legends Were Carved in Stone",
         True,
         (220,200,150)
     )
-    screen.blit(sub, (320, 300))
 
+    sub_rect = sub.get_rect(center=(center_x, panel_y + 140))
+    screen.blit(sub, sub_rect)
 
-    # START TEXT
+    # =====================================================
+    # 🎮 START TEXT (Already centered dynamically)
+    # =====================================================
     part1 = mid_font.render("Press ", True, TEXT_LIGHT)
     space = mid_font.render("SPACE", True, ACCENT)
     part2 = mid_font.render(" to Begin Your Journey", True, TEXT_LIGHT)
 
     total_w = part1.get_width() + space.get_width() + part2.get_width()
-    start_x = WIDTH//2 - total_w//2
+    start_x = center_x - total_w // 2
 
-    y = 370
+    y = panel_y + 210
 
     screen.blit(part1, (start_x, y))
     screen.blit(space, (start_x + part1.get_width(), y))
@@ -756,7 +790,7 @@ def pyramids_overview():
 
     screen.blit(big_font.render("Giza Pyramids", True, (255,220,140)), (495, 40))
 
-    button("Press RIGHT → Go to Khufu")  
+    button("Press RIGHT Arrow to move",'right')  
   
 def khufu():
     sunx = base_world()
@@ -770,11 +804,14 @@ def khufu():
     guide(gx, gy)
 
     bubble([
-        '''The Great Pyramid of Khufu, the only surviving Wonder of the Ancient World. Its built from over 2.3 million stone blocks, some weighing up to 15 tons! For nearly 4,000 years, it was the tallest structure on Earth. Most impressively, its base is perfectly aligned with the four cardinal points with incredible precision. Its not just a tomb; its a timeless miracle of Egyptian engineering that still baffles the world today'''], gx + 200, gy - 140)
+        '''The Great Pyramid of Khufu, the only surviving Wonder of the Ancient World. Its built from over 2.3 million stone blocks, some weighing up to 15 tons! For nearly 4,000 years, it was the tallest structure on Earth. Most impressively, its base is perfectly aligned with the four cardinal points with incredible precision. Its not just a tomb; its a timeless miracle of Egyptian engineering that still baffles the world today'''], gx, gy)
 
     screen.blit(big_font.render("Khufu", True, (255,220,140)), (440,40))
 
-    button("RIGHT ARROW → Next")
+    button("Press RIGHT Arrow to move",'right')
+    if show_hint:
+            hint_box("To enter the pyramid Click it", 50, HEIGHT - 120)
+
 def khafre():
     sunx = base_world()
 
@@ -785,11 +822,11 @@ def khafre():
     guide(gx, gy)
 
     bubble(['''Now, let’s look at the Pyramid of Khafre, the second-largest pyramid in Giza.You can easily recognize it by the original casing stones still clinging to its peak, giving us a glimpse of how polished and shining these pyramids once looked. Although it appears taller than Khufu’s, it’s actually slightly shorter but built on higher ground. Right next to it stands its legendary guardian, the Great Sphinx, carved from a single ridge of limestone. It remains a magnificent symbol of power and royal majesty."'''
-    ], gx + 200, gy - 170)
+    ], gx, gy)
 
     screen.blit(big_font.render("Khafre", True, (255,220,140)), (440,40))
 
-    button("RIGHT ARROW → Next")
+    button("Press RIGHT Arrow to move",'right')
 # ---------------------------------------------------------------
 # PUZZLE STATE
 # ---------------------------------------------------------------
@@ -863,11 +900,11 @@ def menkaure():
     guide(gx, gy)
 
     bubble(['''Lastly, we reach the Pyramid of Menkaure, the smallest of the three main pyramids,but uniquely beautiful. What makes it truly special is the granite casing at its base;unlike the others, Menkaure chose expensive, hard granite brought all the way from Aswan.Despite its smaller size, its construction is incredibly precise, showing a shift towards more refined architectural details. Next to it, you can see the three Queen's Pyramids, making this spot a perfect ending to our journey through the divine Giza plateau."'''
-    ], gx + 200, gy - 140)
+    ], gx, gy)
 
     screen.blit(big_font.render("Menkaure", True, (255,220,140)), (410,40))
 
-    button("RIGHT ARROW → Finish")
+    button("Press RIGHT Arrow to move",'right')
 
 def ending():
 
@@ -895,7 +932,7 @@ def ending():
     screen.blit(msg2, msg2.get_rect(center=(WIDTH//3, 500)))
 
     # 🔘 زر
-    button("Press R to Restart", WIDTH//2 - 180, 600)
+    button("Press R to Restart",'left')
 # INTERIOR FUNCTIONS
 # ---------------------------------------------------------------
 def torch_flame(x,y):
@@ -935,6 +972,27 @@ def flashlight_effect(base_radius=150, darkness=170):
     pygame.draw.circle(dark_layer, (0, 0, 0, 0), (mx, my), int(radius * 0.6))
 
     screen.blit(dark_layer, (0, 0))
+
+show_hint = True
+def hint_box(text, x, y):
+    box_w = 320
+    box_h = 70
+
+    panel = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
+
+    pygame.draw.rect(panel, (20, 10, 5, 210),
+                     (0, 0, box_w, box_h),
+                     border_radius=12)
+
+    pygame.draw.rect(panel, (255, 200, 120),
+                     (0, 0, box_w, box_h),
+                     2, border_radius=12)
+
+    screen.blit(panel, (x, y))
+
+    txt = small_font.render(text, True, (255, 230, 180))
+    txt_rect = txt.get_rect(center=(x + box_w//2, y + box_h//2))
+    screen.blit(txt, txt_rect)
 
 def interior_scene():
     global room_sound_played
@@ -1011,9 +1069,10 @@ def interior_scene():
     # RETURN BUTTON
     # -----------------------------------------------------------
     if puzzle_solved:
-        button("ESC → Return")
+        button("ESC to Return")
     else:
-        button("Solve First!")
+        button("ESC to Return",'left')
+        button("Solve to get tressure")
 
 def reset_puzzle():
     global puzzle_solved
@@ -1138,7 +1197,7 @@ def treasure_scene():
     # -----------------------------
     # زر الرجوع
     # -----------------------------
-    button("Press R → Restart | ESC → Exit")  
+    button("Press ESC to Exit")  
 # ---------------------------------------------------------------
 # ZOOM TRANSITION
 # ---------------------------------------------------------------
@@ -1198,6 +1257,15 @@ while running:
 
         if event.type == pygame.QUIT:
             running = False
+
+        if event.type == pygame.MOUSEBUTTONDOWN:
+
+            mx, my = pygame.mouse.get_pos()
+
+            pyramid_rect = pygame.Rect(400, 300, 250, 250)
+
+            if pyramid_rect.collidepoint(mx, my):
+                scene = 5
 
         if event.type == pygame.MOUSEBUTTONDOWN:
 
@@ -1279,7 +1347,6 @@ while running:
         ending()
     elif scene == 5:
         interior_scene()
-    
     elif scene == 6:
         zoom_transition()
     elif scene == 7:
