@@ -200,7 +200,7 @@ audio.load("overview", "assest/pyramids.mp3")
 audio.load("khufu", "assest/khufu.mp3")
 audio.load("khafre", "assest/khafre.mp3")
 audio.load("menkaure", "assest/Menkaure.mp3")
-audio.load("room", "assest/room.mp3")
+audio.load("roomm", "assest/roomm.mp3")
 audio.load("unlock", "assest/pass.mp3")
 audio.load("fail", "assest/fail.mp3")
 audio.load("end", "assest/end.mp3")        
@@ -323,16 +323,26 @@ zoom = 0
 inside_from = 1
 unlock_frame = 0
 
+# symbols = [
+#     ("A", "bird"),
+#     ("R", "eye"),
+#     ("S", "snake"),
+#     ("E", "leaf")
+# ]
+
+# correct_code = ["A","R","S","E"]
+
+# player_input = []
+
+
 symbols = [
-    ("A", "bird"),
-    ("R", "eye"),
-    ("S", "snake"),
-    ("E", "leaf")
+    ("A", "ankh"),  # ☥
+    ("N", "water"),  # ~~~
+    ("K", "basket"),  # نصف دايرة
+    ("H", "twist")  # شكل حبل
 ]
-
-correct_code = ["A","R","S","E"]
-
-player_input = []
+correct_answer = 3  # رقم الاختيار الصح (0,1,2,3)
+puzzle_solved = False
 
 # ---------------------------------------------------------------
 # DUST PARTICLES
@@ -818,44 +828,48 @@ puzzle_y = 200
 
 puzzle_solved = False
 
+def draw_symbol_shape(shape, x, y):
+    cx = x + 30
+    cy = y + 30
 
-def draw_symbols():
+    if shape == "ankh":
+        pygame.draw.circle(screen, BLACK, (cx, cy - 5), 12, 2)
+        pygame.draw.line(screen, BLACK, (cx, cy + 5), (cx, cy + 20), 3)
+        pygame.draw.line(screen, BLACK, (cx - 8, cy + 8), (cx + 8, cy + 8), 3)
+
+    elif shape == "water":
+        for i in range(2):
+            pygame.draw.arc(screen, BLACK, (x + 10, y + 15 + i * 10, 40, 15), 0, math.pi, 2)
+
+    elif shape == "basket":
+        pygame.draw.arc(screen, BLACK, (x + 15, y + 20, 30, 20), math.pi, 2 * math.pi, 3)
+
+    elif shape == "twist":
+        pygame.draw.line(screen, BLACK, (x + 15, y + 15), (x + 45, y + 45), 1)
+        pygame.draw.line(screen, BLACK, (x + 45, y + 15), (x + 15, y + 45), 2)
+def draw_question():
+    question = "Which symbol represents the letter H?"
+    txt = mid_font.render(question, True, WHITE)
+    screen.blit(txt, (360, 140))
+
     for i, (letter, shape) in enumerate(symbols):
-
         x = puzzle_x + i * (tile_size + 20)
         y = puzzle_y
 
-        pygame.draw.rect(screen, (230,200,150), (x,y,tile_size,tile_size), border_radius=10)
-        pygame.draw.rect(screen, (60,40,20), (x,y,tile_size,tile_size), 2, border_radius=10)
+        pygame.draw.rect(screen, (230, 200, 150), (x, y, tile_size, tile_size), border_radius=15)
+        pygame.draw.rect(screen, (70, 40, 20), (x, y, tile_size, tile_size), 2, border_radius=15)
 
-        # رسم بسيط للرموز (بدون صور)
-        if shape == "bird":
-            pygame.draw.circle(screen, BLACK, (x+40,y+40), 15)
-
-        elif shape == "eye":
-            pygame.draw.ellipse(screen, BLACK, (x+20,y+30,40,20), 2)
-
-        elif shape == "snake":
-            pygame.draw.line(screen, BLACK, (x+20,y+60),(x+60,y+20),3)
-
-        elif shape == "leaf":
-            pygame.draw.polygon(screen, BLACK, [(x+40,y+20),(x+60,y+60),(x+20,y+60)])
+        draw_symbol_shape(shape, x, y)
 
 
-def click_symbol(index):
-    global player_input, puzzle_solved, scene
+def click_answer(index):
+    global puzzle_solved, scene
 
-    player_input.append(symbols[index][0])
-
-    # لو طول الإدخال أكبر من المطلوب → reset
-    if len(player_input) > len(correct_code):
-        player_input = []
-
-    # تحقق
-    if player_input == correct_code:
+    if index == correct_answer:
         puzzle_solved = True
-        scene = 7
-
+        scene = 7  # unlock scene
+    else:
+        print("Wrong answer")
 
 def draw_timer():
     global time_up
@@ -923,13 +937,6 @@ room_sound_played = False
 
 def interior_scene():
     global room_sound_played
-    
-    # تشغيل صوت الغرفة مرة واحدة فقط
-    if not room_sound_played:
-        audio.play_once("Virtual-Pyramid-Tour/assest/room.mp3")
-        room_sound_played = True
-    txt = mid_font.render("Your Code: " + "".join(player_input), True, WHITE)
-    screen.blit(txt, (450, 180))
     screen.fill((28,22,18))
     draw_timer()
     # -----------------------------------------------------------
@@ -974,10 +981,9 @@ def interior_scene():
     # -----------------------------------------------------------
     # PUZZLE (يتترسم بعد الخلفية)
     # -----------------------------------------------------------
-    draw_symbols()
+    draw_question()
     if not puzzle_solved:
-        txt = mid_font.render("Solve the puzzle to unlock the chamber", True, BROWN)
-        screen.blit(txt, (380, 150))
+        ()
     else:
         txt = mid_font.render("Chamber Unlocked!", True, (0,255,120))
         screen.blit(txt, (450, 150))
@@ -1018,13 +1024,13 @@ def interior_scene():
     # INFO BOX ABOVE GUIDE
     # -----------------------------------------------------------
     bubble([
-        "King's Chamber",
-        "This room held the royal",
-        "stone sarcophagus.",
-        "Burial rituals occurred here."
+        "Think carefully...",
+        "Not all symbols are easy.",
+        "Only one is correct.",
+        "Which one is 'H'?"
     ], gx, gy)
 
-    audio.play_once("Virtual-Pyramid-Tour/assest/room.mp3")
+    audio.play_once("roomm")
     
     
     # -----------------------------------------------------------
@@ -1063,7 +1069,7 @@ def unlock_scene():
     screen.blit(txt, (WIDTH//2 - 180 + shake_x, HEIGHT//2 - 50 + shake_y))
 
     # صوت مرة واحدة
-    play_voice_once("unlock", "Virtual-Pyramid-Tour/assest/pass.mp3")
+    audio.play_once("unlock")
 
     unlock_frame += 1
 
@@ -1231,7 +1237,7 @@ while running:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
 
-            if scene == 5 and not puzzle_solved:
+            if scene == 5 :
                mx, my = pygame.mouse.get_pos()
 
                for i in range(len(symbols)):
@@ -1239,7 +1245,7 @@ while running:
                    y = puzzle_y
 
                    if x <= mx <= x+tile_size and y <= my <= y+tile_size:
-                      click_symbol(i)
+                      click_answer(i)
 
         if event.type == pygame.KEYDOWN:
 
@@ -1261,20 +1267,17 @@ while running:
                 scene = 0
                 reset_fade()
 
-            elif scene == 5 and event.key == pygame.K_ESCAPE:
-                scene = inside_from
-                reset_fade()
+            elif event.key == pygame.K_ESCAPE:
+                if scene in [5, 7, 8]:
+                    scene = inside_from
+                    reset_fade()
             elif scene == 8 and event.key == pygame.K_r:
                 scene = 0
                 reset_fade()
             # ⭐ هنا تضيف الكود بتاع الريست بعد الخسارة
-            if event.key == pygame.K_r:
-               restart_game()
-               reset_fade()
+            if event.key == pygame.K_r and time_up:
                puzzle_solved = False
                time_up = False
-               puzzle[:] = [1,2,3,4,5,6,7,8,0]
-               random.shuffle(puzzle)
                start_time = time.time()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
