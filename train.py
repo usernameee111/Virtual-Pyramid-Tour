@@ -6,7 +6,7 @@ import sys
 import math
 import random
 # ---------------------------------------------------------------
-# 2. Set ups & Constants
+# 2. Set ups
 # ---------------------------------------------------------------
 pygame.init()
 pygame.mixer.init()
@@ -141,7 +141,7 @@ for _ in range(80):
         random.uniform(-0.1, 0.1)
     ])
 # ---------------------------------------------------------------
-# 6. CORE GRAPHICS ALGORITHMS
+# 6. Core GRAPHICS ALGORITHMS
 # ---------------------------------------------------------------
 def put_pixel(x, y, color):
     if 0 <= int(x) < WIDTH and 0 <= int(y) < HEIGHT:
@@ -297,7 +297,7 @@ def transform_point(x, y, tx=0, ty=0, sx=1, sy=1):
 
     return (int(x), int(y))
 # ---------------------------------------------------------------
-# 7. UI & HELPERS Functions
+# 7. UI & Helper Functions
 # ---------------------------------------------------------------
 def reset_fade():
     global fade
@@ -428,7 +428,7 @@ def hint_box(text, x, y):
     txt_rect = txt.get_rect(center=(x + box_w//2, y + box_h//2))
     screen.blit(txt, txt_rect)
 # ------------------------------------------
-# 11. Environment
+# 8. Environment
 # ------------------------------------------
 def base_world():
     gradient()
@@ -454,7 +454,7 @@ def bg_intro_():
     bg_y = (HEIGHT - intro_bg.get_height()) // 2
     screen.blit(intro_bg, (bg_x, bg_y))    
 # --------------------------------------------------------------
-# Intro Scene
+# 9. Intro Scene
 # ---------------------------------------------------------------
 def intro():
     bg_intro_()
@@ -510,7 +510,7 @@ def intro():
     screen.blit(space, (start_x + part1.get_width(), y))
     screen.blit(part2, (start_x + part1.get_width() + space.get_width(), y))
 # --------------------------------------
-# 8. Draw Sun & Dust
+# 10. Draw Sun & Dust
 # -----------------------------------
 # Sun
 def draw_sun():
@@ -551,7 +551,7 @@ def draw_dust():
         filled_circle_on_surface(surf, 2, 2, 2, (255,240,200,alpha))
         screen.blit(surf, (p[0], p[1]))
 # --------------------------------------
-# 9. guide
+# 11. guide
 # --------------------------------------
 def guide(x, ground_y):
     img = guide_img
@@ -566,7 +566,7 @@ def guide(x, ground_y):
         )
     )
 # --------------------------------------
-# 10. flag
+# 12. flag
 # --------------------------------------
 def flag(x, y):
     bresenham_line(x, y, x, y - 95, BLACK)
@@ -585,7 +585,7 @@ def flag(x, y):
         (x,y-69),(x+58,y-64+wave),(x+58,y-52+wave),(x,y-56)
     ])
 # --------------------------------------------------------------
-# Pyramids
+# 13. Pyramids
 # ---------------------------------------------------------------
 def get_pyramid_points(w, h):
     left  = (0, h)
@@ -720,10 +720,6 @@ def pyramid(x, by, w, h, color, sunx):
         (x+w//2+shadow_len*0.4, by)
     ])
 
-
-
-
-
 def pyramids_overview():
     global overview_played
 
@@ -739,7 +735,7 @@ def pyramids_overview():
 
     button("Press RIGHT Arrow to move",'right')  
 # -----------------------------------------------------
-# Khufu
+# 14. Khufu
 # -----------------------------------------------------
 def khufu():
     sunx = base_world()
@@ -761,7 +757,7 @@ def khufu():
     if show_hint:
             hint_box("To enter the pyramid Click it", 50, HEIGHT - 120)
 # -----------------------------------------------------
-# khafre
+# 15. khafre
 # -----------------------------------------------------
 def khafre():
     sunx = base_world()
@@ -779,7 +775,7 @@ def khafre():
 
     button("Press RIGHT Arrow to move",'right')
 # -----------------------------------------------------
-# menkaure
+# 16. menkaure
 # -----------------------------------------------------
 def menkaure():
     sunx = base_world()
@@ -798,7 +794,7 @@ def menkaure():
 
     button("Press RIGHT Arrow to move",'right')
 # -----------------------------------
-# Zoom & Inside the Pyramid
+# 17. Zoom & Inside the Pyramid
 # ------------------------------------
 def zoom_transition():
     global zoom, scene
@@ -1028,7 +1024,7 @@ def treasure_scene():
     guide(gx, gy)
     button("Press ESC to Exit")  
 # --------------------------------------------
-# Final Scene
+# 18. Final Scene
 # --------------------------------------------
 def ending():
     screen.blit(end_bg, (0, 0))
@@ -1052,7 +1048,7 @@ def ending():
 
 
 # --------------------------------------------------------------  
-# Main Loop
+# 20. Main Loop
 # ---------------------------------------------------------------
 running = True
 
