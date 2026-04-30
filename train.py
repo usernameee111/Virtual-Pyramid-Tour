@@ -906,6 +906,37 @@ def torch_flame(x,y):
     pygame.draw.circle(screen,(255,120,30),(x,y+flick+2),10)
 room_sound_played = False
 
+
+zoom_level = 1.0
+MIN_ZOOM = 0.6
+MAX_ZOOM = 5.0
+def flashlight_effect(base_radius=130, darkness=170):
+    """
+    base_radius : الحجم الأساسي
+    darkness    : درجة الظلام (كل ما تقل = شفافية أكتر)
+    """
+
+    mx, my = pygame.mouse.get_pos()
+
+    # 🔥 الحجم يتأثر بالزوم
+    radius = int(base_radius * zoom_level)
+
+    # ✨ طبقة ظلام شفافة (أخف من قبل)
+    dark_layer = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    dark_layer.fill((0, 0, 0, darkness))  # جرّبي 120~180 حسب ذوقك
+
+    # 🎬 حافة ناعمة للكشاف (gradient)
+    steps = 20
+    for i in range(steps):
+        r = int(radius * (i / steps))
+        alpha = int(darkness * (i / steps))  # من شفاف لداكن
+        pygame.draw.circle(dark_layer, (0, 0, 0, alpha), (mx, my), r)
+
+    # ✨ فتحة داخلية صافية
+    pygame.draw.circle(dark_layer, (0, 0, 0, 0), (mx, my), int(radius * 0.6))
+
+    screen.blit(dark_layer, (0, 0))
+
 def interior_scene():
     global room_sound_played
     screen.fill((28,22,18))
@@ -974,6 +1005,7 @@ def interior_scene():
     # TITLE
     # -----------------------------------------------------------
     title = big_font.render("Inside The Pyramid", True, BROWN)
+    flashlight_effect()
     screen.blit(title, (420,30))
 
     # -----------------------------------------------------------
@@ -1175,6 +1207,10 @@ while running:
 
                    if x <= mx <= x+tile_size and y <= my <= y+tile_size:
                       click_answer(i)
+
+        if event.type == pygame.MOUSEWHEEL:
+            zoom_level += event.y * 0.1   # لفوق يكبر، لتحت يصغر
+            zoom_level = max(MIN_ZOOM, min(MAX_ZOOM, zoom_level))
 
         if event.type == pygame.KEYDOWN:
 
