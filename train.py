@@ -1,12 +1,8 @@
 # PIXEL DRAW
-# ---------------------------------------------------------------
 def put_pixel(x, y, color):
     if 0 <= int(x) < WIDTH and 0 <= int(y) < HEIGHT:
         screen.set_at((int(x), int(y)), color)
-
-# ---------------------------------------------------------------
 # DDA LINE ALGORITHM
-# ---------------------------------------------------------------
 def dda_line(x1, y1, x2, y2, color):
 
     dx = x2 - x1
@@ -29,9 +25,8 @@ def dda_line(x1, y1, x2, y2, color):
         x += x_inc
         y += y_inc
 
-# ---------------------------------------------------------------
 # BRESENHAM LINE
-# ---------------------------------------------------------------
+
 def bresenham_line(x1, y1, x2, y2, color):
 
     dx = abs(x2 - x1)
@@ -59,9 +54,8 @@ def bresenham_line(x1, y1, x2, y2, color):
             err += dx
             y1 += sy
 
-# ---------------------------------------------------------------
 # MIDPOINT CIRCLE
-# ---------------------------------------------------------------
+
 def circle_points(cx, cy, x, y, color):
 
     pts = [
@@ -92,16 +86,14 @@ def midpoint_circle(cx, cy, r, color):
             y -= 1
             p += 2*(x-y) + 1
 
-# ---------------------------------------------------------------
 # FILLED CIRCLE (for sun / head)
-# ---------------------------------------------------------------
+
 def filled_circle(cx, cy, r, color):
     for rr in range(r, 0, -1):
         midpoint_circle(cx, cy, rr, color)
 
-# ---------------------------------------------------------------
 # SCANLINE TRIANGLE FILL
-# ---------------------------------------------------------------
+
 def scanline_fill_triangle(p1, p2, p3, color):
 
     pts = sorted([p1,p2,p3], key=lambda p: p[1])
@@ -130,10 +122,9 @@ def scanline_fill_triangle(p1, p2, p3, color):
         for x in range(int(xa), int(xb)+1):
             put_pixel(x,y,color)
 
-# ===============================================================
 # INTERACTIVE PYRAMID TOUR - FULL MERGED VERSION
 # Added Interior Pyramid Scene + Zoom Transition
-# ===============================================================
+
 
 import pygame
 import sys
@@ -149,27 +140,17 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 voice_channel = pygame.mixer.Channel(0)
 current_sound = None
-
-overview_sound = pygame.mixer.Sound("assest/pyramids.mp3")
-overview_played = False
-
-
-# 👇 هنا تحطي الصور
-guide_img = pygame.image.load("assest/guide.png").convert_alpha()
+overview_sound = pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/pyramids.mp3")
+overview_played = False 
+guide_img = pygame.image.load("Virtual-Pyramid-Tour/assest/guide.png").convert_alpha()
 guide_img = pygame.transform.smoothscale(guide_img, (160, 240))
 guide_img.set_colorkey((255, 255, 255))  # يشيل الأبيض
-end_bg = pygame.image.load("assest/images/closing.png").convert()
-end_bg = pygame.transform.scale(end_bg, (WIDTH, HEIGHT))
-
-khufu_sound = pygame.mixer.Sound("assest/khufu.mp3")
-khafre_sound = pygame.mixer.Sound("assest/khafre.mp3")
-menkaure_sound = pygame.mixer.Sound("assest/Menkaure.mp3")
+khufu_sound = pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/khufu.mp3")
+khafre_sound = pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/khafre.mp3")
+menkaure_sound = pygame.mixer.Sound("Virtual-Pyramid-Tour/assest/Menkaure.mp3")
 menkaure_played = False
-# -----------------
-# =========================
-# AUDIO MANAGER
-# =========================
 
+# AUDIO MANAGER
 class AudioManager:
     def __init__(self):
         self.channel = pygame.mixer.Channel(0)
@@ -192,8 +173,8 @@ class AudioManager:
 
     def reset(self):
         pygame.mixer.stop()
-        self.channel.stop()      # 🛑 يوقف أي صوت شغال
-        self.current_key = None  # 🔄 يسمح بإعادة التشغيل
+        self.channel.stop()      #  يوقف أي صوت شغال
+        self.current_key = None  #  يسمح بإعادة التشغيل
         
     def play_once(self, key):
         if self.current_key == key and self.channel.get_busy():
@@ -202,6 +183,45 @@ class AudioManager:
         
 
 audio = AudioManager()
+
+audio.load("intro", "Virtual-Pyramid-Tour/assest/intro.mp3")
+audio.load("overview", "Virtual-Pyramid-Tour/assest/pyramids.mp3")
+audio.load("khufu", "Virtual-Pyramid-Tour/assest/khufu.mp3")
+audio.load("khafre", "Virtual-Pyramid-Tour/assest/khafre.mp3")
+audio.load("menkaure", "Virtual-Pyramid-Tour/assest/Menkaure.mp3")
+audio.load("roomm", "Virtual-Pyramid-Tour/assest/roomm.mp3")
+audio.load("unlock", "Virtual-Pyramid-Tour/assest/pass.mp3")
+audio.load("fail", "Virtual-Pyramid-Tour/assest/fail.mp3")
+audio.load("end", "Virtual-Pyramid-Tour/assest/end.mp3")        
+#voice
+played_audio = set()
+current_key = None
+
+def play_sound_once(key, sound):
+    global current_key
+
+    # لو نفس الصوت مايتكررش
+    if current_key == key:
+        return
+
+    # وقف أي صوت شغال
+    voice_channel.stop()
+
+    # شغل الجديد
+    voice_channel.play(sound)
+
+    current_key = key
+    played_audio.add(key)
+voice_channel = pygame.mixer.Channel(0)
+def play_voice_once(key, sound):
+    if key in played_audio:
+        return
+
+    voice_channel.stop()
+    voice_channel.play(sound)
+
+    played_audio.add(key)
+
 audio.load("intro", "assest/intro.mp3")
 audio.load("overview", "assest/pyramids.mp3")
 audio.load("khufu", "assest/khufu.mp3")
@@ -212,10 +232,8 @@ audio.load("unlock", "assest/pass.mp3")
 audio.load("fail", "assest/fail.mp3")
 audio.load("end", "assest/end.mp3")        
 
-# ---------------------------------------------------------------
-# WINDOW
-# ---------------------------------------------------------------
 
+# WINDOW
 pyramid_cache = {}
 sun_cache = None
 guide_head_cache = None
@@ -227,10 +245,8 @@ pygame.display.set_caption("Living Pyramid Tour")
 clock = pygame.time.Clock()
 
 
-# --------------------------------------------------
 # First Background
-# ------------------------------------------
-intro_bg = pygame.image.load("assest/images/first_background.png")
+intro_bg = pygame.image.load("Virtual-Pyramid-Tour/assest/images/first_background.png")
 def scale_background(img, screen_w, screen_h):
     img_w, img_h = img.get_size()
 
@@ -243,59 +259,36 @@ def scale_background(img, screen_w, screen_h):
 
 intro_bg = scale_background(intro_bg, WIDTH, HEIGHT)
 
-
-
-
-
-# ---------------------------------------------------------------
 # FONTS
-# ---------------------------------------------------------------
 title_font = pygame.font.SysFont("timesnewroman", 48, True)
 mid_font   = pygame.font.SysFont("georgia", 26)
 big_font   = pygame.font.SysFont("arial", 34, True)
 # mid_font   = pygame.font.SysFont("timesnewroman", 26, True)
 small_font = pygame.font.SysFont("arial", 20)
 
-# ---------------------------------------------------------------
+
 # COLORS
-# ---------------------------------------------------------------
 BLACK=(0,0,0)
 WHITE=(255,255,255)
 GOLD = (255, 200, 90)
-# SAND = (210, 180, 120)
-# DARK_SAND = (180, 150, 100)
+SAND = (210, 180, 120)
+DARK_SAND = (180, 150, 100)
 BROWN=(148,108,72)
-# SHADOW = (40, 25, 15)
+SHADOW = (40, 25, 15)
 GREEN=(45,180,75)
-# SKY1 = (40, 60, 120)     # أزرق غامق هادي
-# SKY2 = (255, 140, 60)    # برتقالي غروب
-# MAIN_PYRAMID_COLOR = (185, 140, 85)
-# LEFT_FACE_COLOR = (125, 95, 60)
-# RIGHT_FACE_COLOR   = (220, 175, 110)
-
-CARD_COLOR = (40, 30, 20)   # بني غامق شيك
-CARD_BORDER = (200, 170, 110)
-SUB_COLOR = (90, 70, 40)
-# TEXT_COLOR = (60, 40, 20)
-# ACCENT = (200, 150, 50)
-# GOLD = (255, 210, 130)
-SAND = (210, 170, 110)
-DARK_SAND = (150, 110, 70)
-SHADOW = (35, 20, 10)
-
-SKY1 = (15, 25, 60)
-SKY2 = (255, 140, 60)
-
+SKY1 = (40, 60, 120)     # أزرق غامق هادي
+SKY2 = (255, 140, 60)    # برتقالي غروب
 MAIN_PYRAMID_COLOR = (185, 140, 85)
 LEFT_FACE_COLOR = (125, 95, 60)
-RIGHT_FACE_COLOR = (220, 175, 110)
+RIGHT_FACE_COLOR   = (220, 175, 110)
 
-TEXT_LIGHT = (240, 230, 210)
-ACCENT = (255, 180, 80)
+CARD_COLOR = (40, 30, 20)   
+CARD_BORDER = (200, 170, 110)
+SUB_COLOR = (90, 70, 40)
+TEXT_COLOR = (60, 40, 20)
+ACCENT = (200, 150, 50)
 
-# ---------------------------------------------------------------
 # STATES
-# ---------------------------------------------------------------
 scene = 0
 # 0 intro / 1 khufu / 2 khafre / 3 menkaure / 4 ending
 # 5 interior / 6 zoom transition
@@ -305,6 +298,17 @@ frame = 0
 zoom = 0
 inside_from = 1
 unlock_frame = 0
+
+# symbols = [
+#     ("A", "bird"),
+#     ("R", "eye"),
+#     ("S", "snake"),
+#     ("E", "leaf")
+# ]
+
+# correct_code = ["A","R","S","E"]
+
+# player_input = []
 
 
 symbols = [
@@ -316,9 +320,7 @@ symbols = [
 correct_answer = 3  # رقم الاختيار الصح (0,1,2,3)
 puzzle_solved = False
 
-# ---------------------------------------------------------------
 # DUST PARTICLES
-# ---------------------------------------------------------------
 dust = []
 for _ in range(80):
     dust.append([
@@ -329,9 +331,7 @@ for _ in range(80):
         random.uniform(-0.1, 0.1)
     ])
 
-# ---------------------------------------------------------------
 # HELPERS
-# ---------------------------------------------------------------
 def reset_fade():
     global fade
     fade = 255
@@ -355,14 +355,8 @@ def gradient():
 
 def ground():
     pygame.draw.rect(screen, SAND, (0,520,WIDTH,230))
-
-# ---------------------------------------------------------------
+# ===============================================================
 # SUN
-# ---------------------------------------------------------------
-# ===============================================================
-# PATCH 2 : استبدل دالة draw_sun القديمة بالكامل
-# ===============================================================
-
 def draw_sun():
     global sun_cache
 
@@ -377,16 +371,16 @@ def draw_sun():
 
         globals()['screen'] = old_screen
 
-    # ⭐ مكان ثابت للشمس
+    #  مكان ثابت للشمس
     x = 180
     y = 115
 
     screen.blit(sun_cache, (x - 60, y - 60))
 
     return x, y
-# ---------------------------------------------------------------
+
 # DUST
-# ---------------------------------------------------------------
+
 def draw_dust():
     for p in dust:
         p[0] += p[2]
@@ -403,20 +397,17 @@ def draw_dust():
         pygame.draw.circle(surf, (255,240,200,alpha), (2,2), 2)
         screen.blit(surf, (p[0], p[1]))
 
-# ---------------------------------------------------------------
+
 # PYRAMID
-# ---------------------------------------------------------------
+
 # ===============================================================
-# PATCH 4 : استبدل دالة pyramid بالكامل
-# ===============================================================
+# PATCH 4 :
 
 def pyramid(x, by, w, h, color, sunx):
 
     key = (w, h, color)
 
-    # ---------------------------------
     # BUILD ONCE (CACHED)
-    # ---------------------------------
     if key not in pyramid_cache:
 
         surf = pygame.Surface((w, h), pygame.SRCALPHA)
@@ -460,7 +451,7 @@ def pyramid(x, by, w, h, color, sunx):
 
         # -----------------------
         # BLOCK LINES (DDA)
-        # -----------------------
+      
         layers = 10
 
         for i in range(1, layers):
@@ -489,14 +480,13 @@ def pyramid(x, by, w, h, color, sunx):
         globals()['screen'] = old_screen
         pyramid_cache[key] = surf
 
-    # ---------------------------------
+
     # DRAW PYRAMID
-    # ---------------------------------
+
     screen.blit(pyramid_cache[key], (x, by-h))
 
-    # ---------------------------------
     # SHADOW (واضح وواقعي)
-    # ---------------------------------
+
     shadow_len = 90 + (sunx/10)
 
     pygame.draw.polygon(screen, SHADOW, [
@@ -508,7 +498,11 @@ def pyramid(x, by, w, h, color, sunx):
 
 def guide(x, ground_y):
     img = guide_img
+
+    #  خطوة يمين وشمال + إحساس مشي
     step = math.sin(frame * 0.1) * 6
+
+    # نزول بسيط كأنه بيدوس الأرض
     bounce = abs(math.sin(frame * 0.1)) * 2
 
     screen.blit(
@@ -518,9 +512,9 @@ def guide(x, ground_y):
             ground_y - img.get_height() + bounce
         )
     )
-# ---------------------------------------------------------------
+
 # FLAG
-# ---------------------------------------------------------------
+
 def flag(x, y):
     pygame.draw.line(screen, BLACK, (x, y), (x, y - 95), 3)
 
@@ -538,10 +532,8 @@ def flag(x, y):
         (x,y-69),(x+58,y-64+wave),(x+58,y-52+wave),(x,y-56)
     ])
 
-
-# ---------------------------------------------------------------
 # BUBBLE
-# ---------------------------------------------------------------
+
 def bubble(lines, guide_x, guide_y):
 
     box_w = 600
@@ -549,7 +541,7 @@ def bubble(lines, guide_x, guide_y):
     padding = 20
 
     x = guide_x - box_w//2
-    y = guide_y - box_h - 80   # 👈 فوقه بمسافة
+    y = guide_y - box_h - 80   #  فوقه بمسافة
 
     if x < 20:
         x = 20
@@ -559,7 +551,7 @@ def bubble(lines, guide_x, guide_y):
     # ===== BOX =====
     panel = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
 
-    pygame.draw.rect(panel, (30, 20, 10, 230),
+    pygame.draw.rect(panel, (255,245,230,230),
                      (0,0,box_w,box_h),
                      border_radius=10)
 
@@ -571,7 +563,7 @@ def bubble(lines, guide_x, guide_y):
 
     # ===== TEXT =====
     max_text_width = box_w - padding*2
-    max_lines = (box_h - padding*2) // 24   # 👈 يمنع النزول تحت
+    max_lines = (box_h - padding*2) // 24   #  يمنع النزول تحت
 
     wrapped_lines = []
 
@@ -579,21 +571,21 @@ def bubble(lines, guide_x, guide_y):
         clean_line = clean_text(line)
         wrapped_lines.extend(wrap_text(line, small_font, max_text_width))
 
-    # ✂️ قص الزيادة
+    # قص الزيادة
     wrapped_lines = wrapped_lines[:max_lines]
 
     line_y = y + padding
 
     for line in wrapped_lines:
-        txt = small_font.render(line.strip(), True, (240,220,180))
+        txt = small_font.render(line.strip(), True, (30,20,10))
 
         # 👇 left align بدل center
         screen.blit(txt, (x + padding, line_y))
 
         line_y += 24
-  # ---------------------------------------------------------------
+
 # BUTTON
-# ---------------------------------------------------------------
+
 def button(text, x=None, y=None):
     # 📍 لو مفيش position → يستخدم القديم (fallback)
     if x is None:
@@ -611,14 +603,14 @@ def button(text, x=None, y=None):
         glow_color = (255, 240, 180)
         scale = 1.05
     else:
-        glow_color = (200, 160, 90)
+        glow_color = (245, 235, 200)
         scale = 1.0
 
     new_rect = rect.inflate(rect.width * (scale - 1), rect.height * (scale - 1))
 
     # جسم الزر
     pygame.draw.rect(screen, glow_color, new_rect, border_radius=12)
-    pygame.draw.rect(screen, (120, 80, 40), new_rect, 3, border_radius=12)
+    pygame.draw.rect(screen, (120, 90, 50), new_rect, 3, border_radius=12)
 
  
     arrow_move = 0  # ثابت
@@ -628,9 +620,9 @@ def button(text, x=None, y=None):
     # النص
     txt = mid_font.render(text, True, (40, 30, 20))
     screen.blit(txt, txt.get_rect(center=new_rect.center))
-# ---------------------------------------------------------------
+
 # WORLD
-# ---------------------------------------------------------------
+
 def base_world():
     gradient()
     sunx, suny = draw_sun()
@@ -644,9 +636,7 @@ def bg_intro_():
     bg_y = (HEIGHT - intro_bg.get_height()) // 2
     screen.blit(intro_bg, (bg_x, bg_y))    
 
-# ---------------------------------------------------------------
 # EXTERIOR SCENES
-# ---------------------------------------------------------------
 voice_channel = pygame.mixer.Channel(0)
 played_audio = set()
 
@@ -691,55 +681,26 @@ def wrap_text(text, font, max_width):
     return lines
 
 def intro():
-    # 🖼️ رسم الخلفية
+    # رسم الخلفية
     bg_intro_()
-
     audio.play_once("intro")
 
-    # 🪟 البوكس الشفاف
+    #البوكس الشفاف
     panel = pygame.Surface((700, 300), pygame.SRCALPHA)
-    panel.fill((25, 15, 5, 160))  # شفاف غامق
+    panel.fill((20, 30, 50, 180))  # شفاف غامق
 
     screen.blit(panel, (250, 180))
 
-    pygame.draw.rect(screen, (255,220,150), (250,180,700,300), 2, border_radius=20)
-
+    pygame.draw.rect(screen, (255,255,255), (250,180,700,300), 2, border_radius=20)
     # TITLE
-    title_text = "Journey Into Ancient Egypt"
-
-    shadow = title_font.render(title_text, True, (0,0,0))
-    screen.blit(shadow, (302, 232))
-
-    glow = title_font.render(title_text, True, ACCENT)
-    screen.blit(glow, (298, 228))
-
-    title = title_font.render(title_text, True, GOLD)
+    title = title_font.render("Journey Into Ancient Egypt", True, WHITE)
     screen.blit(title, (300, 230))
-
-
     # SUBTITLE
-    sub = mid_font.render(
-        "Where Legends Were Carved in Stone",
-        True,
-        (220,200,150)
-    )
+    sub = mid_font.render("Where Legends Were Carved in Stone", True, (230,230,230))
     screen.blit(sub, (320, 300))
-
-
     # START TEXT
-    part1 = mid_font.render("Press ", True, TEXT_LIGHT)
-    space = mid_font.render("SPACE", True, ACCENT)
-    part2 = mid_font.render(" to Begin Your Journey", True, TEXT_LIGHT)
-
-    total_w = part1.get_width() + space.get_width() + part2.get_width()
-    start_x = WIDTH//2 - total_w//2
-
-    y = 370
-
-    screen.blit(part1, (start_x, y))
-    screen.blit(space, (start_x + part1.get_width(), y))
-    screen.blit(part2, (start_x + part1.get_width() + space.get_width(), y))
-
+    start = mid_font.render("Press SPACE to Begin Your Exploration", True, (240,240,240))
+    screen.blit(start, (350, 370))
 def pyramids_overview():
     global overview_played
 
@@ -754,7 +715,7 @@ def pyramids_overview():
 
     pyramid(800, 540, 180, 140, MAIN_PYRAMID_COLOR, sunx)
 
-    screen.blit(big_font.render("Giza Pyramids", True, (255,220,140)), (495, 40))
+    screen.blit(big_font.render("Giza Pyramids", True, WHITE), (495, 40))
 
     button("Press RIGHT → Go to Khufu")  
   
@@ -772,7 +733,7 @@ def khufu():
     bubble([
         '''The Great Pyramid of Khufu, the only surviving Wonder of the Ancient World. Its built from over 2.3 million stone blocks, some weighing up to 15 tons! For nearly 4,000 years, it was the tallest structure on Earth. Most impressively, its base is perfectly aligned with the four cardinal points with incredible precision. Its not just a tomb; its a timeless miracle of Egyptian engineering that still baffles the world today'''], gx + 200, gy - 140)
 
-    screen.blit(big_font.render("Khufu", True, (255,220,140)), (440,40))
+    screen.blit(big_font.render("Scene 1 : Khufu", True, WHITE), (440,40))
 
     button("RIGHT ARROW → Next")
 def khafre():
@@ -787,12 +748,12 @@ def khafre():
     bubble(['''Now, let’s look at the Pyramid of Khafre, the second-largest pyramid in Giza.You can easily recognize it by the original casing stones still clinging to its peak, giving us a glimpse of how polished and shining these pyramids once looked. Although it appears taller than Khufu’s, it’s actually slightly shorter but built on higher ground. Right next to it stands its legendary guardian, the Great Sphinx, carved from a single ridge of limestone. It remains a magnificent symbol of power and royal majesty."'''
     ], gx + 200, gy - 170)
 
-    screen.blit(big_font.render("Khafre", True, (255,220,140)), (440,40))
+    screen.blit(big_font.render("Scene 2 : Khafre", True, WHITE), (440,40))
 
     button("RIGHT ARROW → Next")
-# ---------------------------------------------------------------
+
 # PUZZLE STATE
-# ---------------------------------------------------------------
+
 puzzle = [1,2,3,
           4,5,6,
           7,8,0]  # 0 = empty
@@ -865,39 +826,26 @@ def menkaure():
     bubble(['''Lastly, we reach the Pyramid of Menkaure, the smallest of the three main pyramids,but uniquely beautiful. What makes it truly special is the granite casing at its base;unlike the others, Menkaure chose expensive, hard granite brought all the way from Aswan.Despite its smaller size, its construction is incredibly precise, showing a shift towards more refined architectural details. Next to it, you can see the three Queen's Pyramids, making this spot a perfect ending to our journey through the divine Giza plateau."'''
     ], gx + 200, gy - 140)
 
-    screen.blit(big_font.render("Menkaure", True, (255,220,140)), (410,40))
+    screen.blit(big_font.render("Scene 3 : Menkaure", True, WHITE), (410,40))
 
     button("RIGHT ARROW → Finish")
 
 def ending():
-
-    # 🖼️ الخلفية الجديدة
-    screen.blit(end_bg, (0, 0))
+    base_world()
 
     audio.play_once("end")
+    screen.blit(title_font.render("Thank u for joining our virtual tour of", True, WHITE),
+                (210, 270))
 
-    # ✨ overlay خفيف عشان النص يبان
-    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-    overlay.fill((0, 0, 0, 120))
-    screen.blit(overlay, (0, 0))
+    screen.blit(title_font.render("The Great Pyramids ♥", True, WHITE),
+                (400, 360))
 
-    # 🎉 العنوان
-    title = title_font.render("Thank you for joining", True, (255, 220, 120))
-    screen.blit(title, title.get_rect(center=(WIDTH//3,300)))
+    screen.blit(big_font.render("History Still Breathes Here", True, GOLD),
+                (430, 450))
 
-    title = title_font.render("our virtual tour of", True, (255, 220, 120))
-    screen.blit(title, title.get_rect(center=(WIDTH//3, 360)))
-
-    title = title_font.render("The Great Pyramids ♥", True, (255, 220, 120))
-    screen.blit(title, title.get_rect(center=(WIDTH//3, 430)))
-
-    msg2 = mid_font.render("History still breathes here", True, (220,200,150))
-    screen.blit(msg2, msg2.get_rect(center=(WIDTH//3, 500)))
-
-    # 🔘 زر
-    button("Press R to Restart", WIDTH//2 - 180, 600)
+    button("Press R to Restart")
 # INTERIOR FUNCTIONS
-# ---------------------------------------------------------------
+
 def torch_flame(x,y):
     flick = random.randint(-5,5)
     pygame.draw.rect(screen, BROWN, (x-3,y,6,35))
@@ -917,21 +865,21 @@ def flashlight_effect(base_radius=150, darkness=170):
 
     mx, my = pygame.mouse.get_pos()
 
-    # 🔥 الحجم يتأثر بالزوم
+    #  الحجم يتأثر بالزوم
     radius = int(base_radius * zoom_level)
 
-    # ✨ طبقة ظلام شفافة (أخف من قبل)
+    #  طبقة ظلام شفافة (أخف من قبل)
     dark_layer = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     dark_layer.fill((0, 0, 0, darkness))  # جرّبي 120~180 حسب ذوقك
 
-    # 🎬 حافة ناعمة للكشاف (gradient)
+    #  حافة ناعمة للكشاف (gradient)
     steps = 20
     for i in range(steps):
         r = int(radius * (i / steps))
         alpha = int(darkness * (i / steps))  # من شفاف لداكن
         pygame.draw.circle(dark_layer, (0, 0, 0, alpha), (mx, my), r)
 
-    # ✨ فتحة داخلية صافية
+    #  فتحة داخلية صافية
     pygame.draw.circle(dark_layer, (0, 0, 0, 0), (mx, my), int(radius * 0.6))
 
     screen.blit(dark_layer, (0, 0))
@@ -939,9 +887,9 @@ def flashlight_effect(base_radius=150, darkness=170):
 def interior_scene():
     global room_sound_played
     screen.fill((28,22,18))
-    # -----------------------------------------------------------
+
     # SIDE WALLS
-    # -----------------------------------------------------------
+
     pygame.draw.polygon(screen,(70,60,50),
         [(0,0),(260,220),(260,750),(0,750)])
 
@@ -951,15 +899,11 @@ def interior_scene():
     # center wall / chamber
     pygame.draw.rect(screen,(55,48,40),(260,0,680,750))
 
-    # -----------------------------------------------------------
     # PERSPECTIVE FLOOR PATH
-    # -----------------------------------------------------------
     pygame.draw.polygon(screen,(95,80,65),
         [(400,750),(800,750),(700,260),(500,260)])
 
-    # -----------------------------------------------------------
     # TORCHES
-    # -----------------------------------------------------------
     torch_flame(150,250)
     torch_flame(1050,250)
 
@@ -970,27 +914,18 @@ def interior_scene():
     pygame.draw.circle(glow,(255,140,20,60),(1050,250),180)
 
     screen.blit(glow,(0,0))
-
-    # -----------------------------------------------------------
     # SARCOPHAGUS
-    # -----------------------------------------------------------
     pygame.draw.rect(screen,(120,120,120),(500,520,220,70))
     pygame.draw.rect(screen,(90,90,90),(530,490,160,35))
     pygame.draw.rect(screen,(40,40,40),(500,520,220,70),2)
-
-    # -----------------------------------------------------------
     # PUZZLE (يتترسم بعد الخلفية)
-    # -----------------------------------------------------------
     draw_question()
     if not puzzle_solved:
         ()
     else:
         txt = mid_font.render("Chamber Unlocked!", True, (0,255,120))
         screen.blit(txt, (450, 150))
-
-    # -----------------------------------------------------------
     # GUIDE POSITION (85%,90%)
-    # -----------------------------------------------------------
     gx = int(WIDTH * 0.85)
     gy = int(HEIGHT * 0.90)
 
@@ -998,18 +933,11 @@ def interior_scene():
 
 
     audio.play_once("roomm")
-    
-    
-    # -----------------------------------------------------------
     # TITLE
-    # -----------------------------------------------------------
     title = big_font.render("Inside The Pyramid", True, BROWN)
     flashlight_effect()
     screen.blit(title, (420,30))
-
-    # -----------------------------------------------------------
     # RETURN BUTTON
-    # -----------------------------------------------------------
     if puzzle_solved:
         button("ESC → Return")
     else:
@@ -1031,44 +959,28 @@ def unlock_scene():
     # ضوء بيكبر تدريجياً
     glow = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
     radius = min(10 + unlock_frame*6, 500)
-
     pygame.draw.circle(glow, (255,200,100,120), (WIDTH//2, HEIGHT//2), radius)
     screen.blit(glow, (0,0))
-
     # نص فتح الغرفة
     txt = big_font.render("Ancient Chamber Unlocked!", True, (255,215,90))
     screen.blit(txt, (WIDTH//2 - 180 + shake_x, HEIGHT//2 - 50 + shake_y))
-
     # صوت مرة واحدة
     audio.play_once("unlock")
-
     unlock_frame += 1
-
     # بعد ثواني ننتقل تلقائي
     if unlock_frame > 80:
         scene = 8   # يرجع داخل الغرفة (أو أي reward scene)
         unlock_frame = 0
 
-# ---------------------------------------------------------------
 # TREASURE SCENE (Scene 8)
-# ---------------------------------------------------------------
 def treasure_scene():
-    
     screen.fill((10, 8, 5))
 
-    # -----------------------------
     # جدران مظلمة
-    # -----------------------------
     pygame.draw.rect(screen, (40,35,25), (0,0,WIDTH,HEIGHT))
-
-    # -----------------------------
     # أرضية
-    # -----------------------------
     pygame.draw.rect(screen, (70,55,40), (0,500,WIDTH,250))
-
-    # -----------------------------
     # توهج ذهبي
-    # -----------------------------
     glow = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
 
     for i in range(5):
@@ -1081,9 +993,9 @@ def treasure_scene():
 
     screen.blit(glow, (0,0))
 
-    # -----------------------------
+      
     # صندوق الكنز
-    # -----------------------------
+      
     chest_x = WIDTH//2 - 120
     chest_y = 430
 
@@ -1095,58 +1007,38 @@ def treasure_scene():
     pygame.draw.rect(screen, (140,100,50), (chest_x, chest_y-60, 240, 60))
     pygame.draw.rect(screen, (80,60,30), (chest_x, chest_y-60, 240, 60), 3)
 
-    # -----------------------------
+      
     # الذهب (جوا الصندوق)
-    # -----------------------------
     for i in range(20):
         gx = chest_x + 20 + (i%5)*40
         gy = chest_y + 20 + (i//5)*20
         pygame.draw.circle(screen, (255,215,0), (gx,gy), 8)
 
-    # -----------------------------
     # جواهر
-    # -----------------------------
     pygame.draw.circle(screen, (0,255,200), (chest_x+60, chest_y+40), 10)
     pygame.draw.circle(screen, (255,0,100), (chest_x+160, chest_y+60), 10)
     pygame.draw.circle(screen, (100,200,255), (chest_x+120, chest_y+30), 10)
-
-    # -----------------------------
-    # بريق متحرك ✨
-    # -----------------------------
+    # بريق متحرك 
     for _ in range(15):
         x = random.randint(chest_x, chest_x+240)
         y = random.randint(chest_y-80, chest_y)
         pygame.draw.circle(screen, (255,255,200), (x,y), 2)
-
-    # -----------------------------
     # النصوص
-    # -----------------------------
     title = big_font.render("Treasure Discovered!", True, GOLD)
     screen.blit(title, (WIDTH//2 - 180, 120))
 
     msg = mid_font.render("You unlocked the secrets of the pyramid", True, WHITE)
     screen.blit(msg, (WIDTH//2 - 220, 180))
-
-    # -----------------------------
-    # المرشد
-    # -----------------------------
+    # المرشد 
     gx = int(WIDTH * 0.85)
     gy = int(HEIGHT * 0.90)
 
     guide(gx, gy)
-
-    # -----------------------------
     # زر الرجوع
-    # -----------------------------
     button("Press R → Restart | ESC → Exit")  
-# ---------------------------------------------------------------
-# ZOOM TRANSITION
-# ---------------------------------------------------------------
-# ===============================================================
-# 6) zoom faster
-# استبدل zoom_transition بالكامل
-# ===============================================================
 
+# ZOOM TRANSITION
+# 6) zoom faster
 def zoom_transition():
     global zoom, scene
 
@@ -1184,10 +1076,8 @@ def zoom_transition():
         scene = 5
         reset_puzzle() 
         reset_fade()
-        
-# ---------------------------------------------------------------
 # MAIN LOOP
-# ---------------------------------------------------------------
+
 running = True
 
 while running:
@@ -1232,7 +1122,7 @@ while running:
                 reset_fade()
 
             elif scene == 4 and event.key == pygame.K_r:
-                audio.reset()   # 🔥 مهم جدًا
+                audio.reset()   
                 scene = 0
                 reset_fade()
 
@@ -1260,9 +1150,7 @@ while running:
                     scene = 6
                     zoom = 0
                     reset_fade()
-    # -----------------------------------------------------------
     # DRAW
-    # -----------------------------------------------------------
     if scene == 0:
         intro()
     elif scene == 0.5:
