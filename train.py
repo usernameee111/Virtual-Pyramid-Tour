@@ -181,13 +181,18 @@ class AudioManager:
         if key not in self.sounds:
             return
 
-        # ❌ لو الصوت لسه شغال متعيدوش
-        if self.channel.get_busy():
+        if self.current_key == key:
             return
 
+        self.channel.stop()
         self.channel.play(self.sounds[key])
         self.current_key = key
 
+    def reset(self):
+        pygame.mixer.stop()
+        self.channel.stop()      # 🛑 يوقف أي صوت شغال
+        self.current_key = None  # 🔄 يسمح بإعادة التشغيل
+        
     def play_once(self, key):
         if self.current_key == key and self.channel.get_busy():
             return
@@ -204,35 +209,6 @@ audio.load("roomm", "assest/roomm.mp3")
 audio.load("unlock", "assest/pass.mp3")
 audio.load("fail", "assest/fail.mp3")
 audio.load("end", "assest/end.mp3")        
-#voice
-played_audio = set()
-current_key = None
-
-def play_sound_once(key, sound):
-    global current_key
-
-    # لو نفس الصوت مايتكررش
-    if current_key == key:
-        return
-
-    # وقف أي صوت شغال
-    voice_channel.stop()
-
-    # شغل الجديد
-    voice_channel.play(sound)
-
-    current_key = key
-    played_audio.add(key)
-voice_channel = pygame.mixer.Channel(0)
-def play_voice_once(key, sound):
-    if key in played_audio:
-        return
-
-    voice_channel.stop()
-    voice_channel.play(sound)
-
-    played_audio.add(key)
-
 
 # ---------------------------------------------------------------
 # WINDOW
@@ -566,50 +542,55 @@ def flag(x, y):
 # BUBBLE
 # ---------------------------------------------------------------
 def bubble(lines, guide_x, guide_y):
-    """
-    Professional rectangular speech/info box
-    Positioned above-left of guide
-    """
 
-    # box size
-    box_w = 340
-    box_h = 145
-    padding = 15
+    box_w = 600
+    box_h = 200
+    padding = 20
 
-    # place above-left of character head
-    x = guide_x - box_w - 260
-    y = guide_y - 210
-   
-    # keep inside screen
+    x = guide_x - box_w//2
+    y = guide_y - box_h - 80   # 👈 فوقه بمسافة
+
     if x < 20:
         x = 20
-    if y < 20:
-        y = 20
+    if x + box_w > WIDTH :
+        x = WIDTH - box_w - 20
 
-    # translucent surface
+    # ===== BOX =====
     panel = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
-    panel.fill((0, 0, 0, 0))   
 
-    # rounded rectangle
     pygame.draw.rect(panel, (255,245,230,230),
                      (0,0,box_w,box_h),
-                     border_radius=8)
+                     border_radius=10)
 
-    pygame.draw.rect(panel, (60, 40, 20), 
-                     (0,0,box_w,box_h), 
-                     width=2, border_radius=8)
+    pygame.draw.rect(panel, (60,40,20),
+                     (0,0,box_w,box_h),
+                     2, border_radius=10)
 
     screen.blit(panel, (x, y))
 
-    # text centered + padded
-    line_y = y + padding + 8
+    # ===== TEXT =====
+    max_text_width = box_w - padding*2
+    max_lines = (box_h - padding*2) // 24   # 👈 يمنع النزول تحت
+
+    wrapped_lines = []
 
     for line in lines:
-        txt = small_font.render(line, True, (20,20,20))
-        txt_rect = txt.get_rect(center=(x + box_w//2, line_y + 10))
-        screen.blit(txt, txt_rect)
-        line_y += 28
-# ---------------------------------------------------------------
+        clean_line = clean_text(line)
+        wrapped_lines.extend(wrap_text(line, small_font, max_text_width))
+
+    # ✂️ قص الزيادة
+    wrapped_lines = wrapped_lines[:max_lines]
+
+    line_y = y + padding
+
+    for line in wrapped_lines:
+        txt = small_font.render(line.strip(), True, (30,20,10))
+
+        # 👇 left align بدل center
+        screen.blit(txt, (x + padding, line_y))
+
+        line_y += 24
+  # ---------------------------------------------------------------
 # BUTTON
 # ---------------------------------------------------------------
 def button(text, x=None, y=None):
@@ -683,28 +664,36 @@ def restart_game():
     overview_played = False
 
     scene = 0
-def play_sound_once(key, sound):
-    global current_scene_sound
-
-    if current_scene_sound == key and voice_channel.get_busy():
-        return
-
-    voice_channel.stop()
-    voice_channel.play(sound)
-
-    current_scene_sound = key
-    played_audio.add(key)
 intro_sound = pygame.mixer.Sound("assest/intro.mp3")
 
+def clean_text(text):
+    text = text.replace("\n", " ")
+    text = text.replace("  ", " ")
+    return " ".join(text.split())
+
+def wrap_text(text, font, max_width):
+    words = text.split(' ')
+    lines = []
+    current_line = ""
+
+    for word in words:
+        test_line = current_line + word + " "
+        if font.size(test_line)[0] <= max_width:
+            current_line = test_line
+        else:
+            lines.append(current_line)
+            current_line = word + " "
+
+    if current_line:
+        lines.append(current_line)
+
+    return lines
 
 def intro():
     # 🖼️ رسم الخلفية
     bg_intro_()
 
-    # 🔊 تشغيل الصوت مرة واحدة بس
-    if "intro" not in played_audio:
-        audio.play_once("intro")
-        played_audio.add("intro")
+    audio.play_once("intro")
 
     # 🪟 البوكس الشفاف
     panel = pygame.Surface((700, 300), pygame.SRCALPHA)
@@ -717,26 +706,25 @@ def intro():
     # --------------------------
     # TITLE
     # --------------------------
-    title = title_font.render("Welcome to the Giza Plateau", True, WHITE)
+    title = title_font.render("Journey Into Ancient Egypt", True, WHITE)
     screen.blit(title, (300, 230))
 
     # --------------------------
     # SUBTITLE
     # --------------------------
-    sub = mid_font.render("'A Living Journey Through Ancient Egypt'", True, (230,230,230))
+    sub = mid_font.render("Where Legends Were Carved in Stone", True, (230,230,230))
     screen.blit(sub, (320, 300))
 
     # --------------------------
     # START TEXT
     # --------------------------
-    start = mid_font.render("Press 'SPACE' to Begin your journey", True, (240,240,240))
+    start = mid_font.render("Press SPACE to Begin Your Exploration", True, (240,240,240))
     screen.blit(start, (350, 370))
 def pyramids_overview():
     global overview_played
 
     if not overview_played:
-      play_sound_once("overview", overview_sound)
-      overview_played = True
+       audio.play_once("overview")
     sunx = base_world()
 
 
@@ -749,18 +737,6 @@ def pyramids_overview():
     screen.blit(big_font.render("Giza Pyramids", True, WHITE), (495, 40))
 
     button("Press RIGHT → Go to Khufu")  
-voice_channel = pygame.mixer.Channel(0)
-current_scene_sound = None
-def play_sound(key, sound):
-    global current_scene_sound
-
-    if current_scene_sound == key and voice_channel.get_busy():
-        return
-
-    voice_channel.stop()
-    voice_channel.play(sound)
-
-    current_scene_sound = key
   
 def khufu():
     sunx = base_world()
@@ -774,11 +750,7 @@ def khufu():
     guide(gx, gy)
 
     bubble([
-        "Khufu Pyramid",
-        "Originally 146.6m tall",
-        "Built with 2 million blocks",
-        "Oldest Great Pyramid"
-    ], gx + 200, gy - 140)
+        '''The Great Pyramid of Khufu, the only surviving Wonder of the Ancient World. Its built from over 2.3 million stone blocks, some weighing up to 15 tons! For nearly 4,000 years, it was the tallest structure on Earth. Most impressively, its base is perfectly aligned with the four cardinal points with incredible precision. Its not just a tomb; its a timeless miracle of Egyptian engineering that still baffles the world today'''], gx + 200, gy - 140)
 
     screen.blit(big_font.render("Scene 1 : Khufu", True, WHITE), (440,40))
 
@@ -786,18 +758,13 @@ def khufu():
 def khafre():
     sunx = base_world()
 
-    play_sound_once("khafre", khafre_sound)
-
+    audio.play_once("khafre")
     pyramid(330,540,390,310,(205,175,118), sunx)
 
     gx, gy = 980, 540
     guide(gx, gy)
 
-    bubble([
-        "Khafre Pyramid",
-        "Built on higher ground.",
-        "Still has casing stones.",
-        "Connected to Sphinx."
+    bubble(['''Now, let’s look at the Pyramid of Khafre, the second-largest pyramid in Giza.You can easily recognize it by the original casing stones still clinging to its peak, giving us a glimpse of how polished and shining these pyramids once looked. Although it appears taller than Khufu’s, it’s actually slightly shorter but built on higher ground. Right next to it stands its legendary guardian, the Great Sphinx, carved from a single ridge of limestone. It remains a magnificent symbol of power and royal majesty."'''
     ], gx + 200, gy - 170)
 
     screen.blit(big_font.render("Scene 2 : Khafre", True, WHITE), (440,40))
@@ -858,7 +825,8 @@ def click_answer(index):
 
     if index == correct_answer:
         puzzle_solved = True
-        scene = 7  # unlock scene
+        audio.play("unlock")
+        scene = 7  
     else:
         print("Wrong answer")
 
@@ -867,18 +835,14 @@ def click_answer(index):
 def menkaure():
     sunx = base_world()
 
-    play_sound_once("menkaure", menkaure_sound)
+    audio.play_once("menkaure")
 
     pyramid(430,540,270,220,(190,150,100), sunx)
 
     gx, gy = 980, 540
     guide(gx, gy)
 
-    bubble([
-        "Menkaure Pyramid",
-        "Smallest of the three.",
-        "Granite lower casing.",
-        "Elegant design."
+    bubble(['''Lastly, we reach the Pyramid of Menkaure, the smallest of the three main pyramids,but uniquely beautiful. What makes it truly special is the granite casing at its base;unlike the others, Menkaure chose expensive, hard granite brought all the way from Aswan.Despite its smaller size, its construction is incredibly precise, showing a shift towards more refined architectural details. Next to it, you can see the three Queen's Pyramids, making this spot a perfect ending to our journey through the divine Giza plateau."'''
     ], gx + 200, gy - 140)
 
     screen.blit(big_font.render("Scene 3 : Menkaure", True, WHITE), (410,40))
@@ -888,13 +852,15 @@ def menkaure():
 def ending():
     base_world()
 
-    play_sound_once("end", pygame.mixer.Sound("assest/end.mp3"))
+    audio.play_once("end")
+    screen.blit(title_font.render("Thank u for joining our virtual tour of", True, WHITE),
+                (210, 270))
 
-    screen.blit(title_font.render("Thank You For Visiting Egypt", True, WHITE),
-                (250, 300))
+    screen.blit(title_font.render("The Great Pyramids ♥", True, WHITE),
+                (400, 360))
 
     screen.blit(big_font.render("History Still Breathes Here", True, GOLD),
-                (350, 380))
+                (430, 450))
 
     button("Press R to Restart")
 # INTERIOR FUNCTIONS
@@ -910,7 +876,7 @@ room_sound_played = False
 zoom_level = 1.0
 MIN_ZOOM = 0.6
 MAX_ZOOM = 5.0
-def flashlight_effect(base_radius=130, darkness=170):
+def flashlight_effect(base_radius=150, darkness=170):
     """
     base_radius : الحجم الأساسي
     darkness    : درجة الظلام (كل ما تقل = شفافية أكتر)
@@ -1014,8 +980,11 @@ def interior_scene():
     if puzzle_solved:
         button("ESC → Return")
     else:
-        button("Solve Puzzle First!")
+        button("Solve First!")
 
+def reset_puzzle():
+    global puzzle_solved
+    puzzle_solved = False
 
 def unlock_scene():
     global unlock_frame, scene
@@ -1180,6 +1149,7 @@ def zoom_transition():
     if zoom >= 18:
         zoom = 0
         scene = 5
+        reset_puzzle() 
         reset_fade()
         
 # ---------------------------------------------------------------
@@ -1229,6 +1199,7 @@ while running:
                 reset_fade()
 
             elif scene == 4 and event.key == pygame.K_r:
+                audio.reset()   # 🔥 مهم جدًا
                 scene = 0
                 reset_fade()
 
@@ -1236,6 +1207,12 @@ while running:
                 if scene in [5, 7, 8]:
                     scene = inside_from
                     reset_fade()
+
+            elif event.key == pygame.K_r:
+                audio.reset()
+                reset_puzzle()
+                scene = 0
+                reset_fade()
             elif scene == 8 and event.key == pygame.K_r:
                 scene = 0
                 reset_fade()
@@ -1258,7 +1235,6 @@ while running:
     elif scene == 0.5:
         pyramids_overview()
         if not overview_played:
-           overview_sound.play()
            overview_played = True
     elif scene == 1:
         khufu()
