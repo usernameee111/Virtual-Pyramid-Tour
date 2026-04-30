@@ -149,7 +149,6 @@ screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
 voice_channel = pygame.mixer.Channel(0)
 current_sound = None
-
 overview_sound = pygame.mixer.Sound("assest/pyramids.mp3")
 overview_played = False
 
