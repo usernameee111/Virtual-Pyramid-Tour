@@ -158,6 +158,8 @@ overview_played = False
 guide_img = pygame.image.load("assest/guide.png").convert_alpha()
 guide_img = pygame.transform.smoothscale(guide_img, (160, 240))
 guide_img.set_colorkey((255, 255, 255))  # يشيل الأبيض
+end_bg = pygame.image.load("assest/images/closing.png").convert()
+end_bg = pygame.transform.scale(end_bg, (WIDTH, HEIGHT))
 
 khufu_sound = pygame.mixer.Sound("assest/khufu.mp3")
 khafre_sound = pygame.mixer.Sound("assest/khafre.mp3")
@@ -260,22 +262,36 @@ small_font = pygame.font.SysFont("arial", 20)
 BLACK=(0,0,0)
 WHITE=(255,255,255)
 GOLD = (255, 200, 90)
-SAND = (210, 180, 120)
-DARK_SAND = (180, 150, 100)
-BROWN=(148,108,72)
-SHADOW = (40, 25, 15)
+# SAND = (210, 180, 120)
+# DARK_SAND = (180, 150, 100)
+# BROWN=(148,108,72)
+# SHADOW = (40, 25, 15)
 GREEN=(45,180,75)
-SKY1 = (40, 60, 120)     # أزرق غامق هادي
-SKY2 = (255, 140, 60)    # برتقالي غروب
-MAIN_PYRAMID_COLOR = (185, 140, 85)
-LEFT_FACE_COLOR = (125, 95, 60)
-RIGHT_FACE_COLOR   = (220, 175, 110)
+# SKY1 = (40, 60, 120)     # أزرق غامق هادي
+# SKY2 = (255, 140, 60)    # برتقالي غروب
+# MAIN_PYRAMID_COLOR = (185, 140, 85)
+# LEFT_FACE_COLOR = (125, 95, 60)
+# RIGHT_FACE_COLOR   = (220, 175, 110)
 
 CARD_COLOR = (40, 30, 20)   # بني غامق شيك
 CARD_BORDER = (200, 170, 110)
 SUB_COLOR = (90, 70, 40)
-TEXT_COLOR = (60, 40, 20)
-ACCENT = (200, 150, 50)
+# TEXT_COLOR = (60, 40, 20)
+# ACCENT = (200, 150, 50)
+# GOLD = (255, 210, 130)
+SAND = (210, 170, 110)
+DARK_SAND = (150, 110, 70)
+SHADOW = (35, 20, 10)
+
+SKY1 = (15, 25, 60)
+SKY2 = (255, 140, 60)
+
+MAIN_PYRAMID_COLOR = (185, 140, 85)
+LEFT_FACE_COLOR = (125, 95, 60)
+RIGHT_FACE_COLOR = (220, 175, 110)
+
+TEXT_LIGHT = (240, 230, 210)
+ACCENT = (255, 180, 80)
 
 # ---------------------------------------------------------------
 # STATES
@@ -289,17 +305,6 @@ frame = 0
 zoom = 0
 inside_from = 1
 unlock_frame = 0
-
-# symbols = [
-#     ("A", "bird"),
-#     ("R", "eye"),
-#     ("S", "snake"),
-#     ("E", "leaf")
-# ]
-
-# correct_code = ["A","R","S","E"]
-
-# player_input = []
 
 
 symbols = [
@@ -503,11 +508,7 @@ def pyramid(x, by, w, h, color, sunx):
 
 def guide(x, ground_y):
     img = guide_img
-
-    # 👣 خطوة يمين وشمال + إحساس مشي
     step = math.sin(frame * 0.1) * 6
-
-    # 🦶 نزول بسيط كأنه بيدوس الأرض
     bounce = abs(math.sin(frame * 0.1)) * 2
 
     screen.blit(
@@ -558,7 +559,7 @@ def bubble(lines, guide_x, guide_y):
     # ===== BOX =====
     panel = pygame.Surface((box_w, box_h), pygame.SRCALPHA)
 
-    pygame.draw.rect(panel, (255,245,230,230),
+    pygame.draw.rect(panel, (30, 20, 10, 230),
                      (0,0,box_w,box_h),
                      border_radius=10)
 
@@ -584,7 +585,7 @@ def bubble(lines, guide_x, guide_y):
     line_y = y + padding
 
     for line in wrapped_lines:
-        txt = small_font.render(line.strip(), True, (30,20,10))
+        txt = small_font.render(line.strip(), True, (240,220,180))
 
         # 👇 left align بدل center
         screen.blit(txt, (x + padding, line_y))
@@ -610,14 +611,14 @@ def button(text, x=None, y=None):
         glow_color = (255, 240, 180)
         scale = 1.05
     else:
-        glow_color = (245, 235, 200)
+        glow_color = (200, 160, 90)
         scale = 1.0
 
     new_rect = rect.inflate(rect.width * (scale - 1), rect.height * (scale - 1))
 
     # جسم الزر
     pygame.draw.rect(screen, glow_color, new_rect, border_radius=12)
-    pygame.draw.rect(screen, (120, 90, 50), new_rect, 3, border_radius=12)
+    pygame.draw.rect(screen, (120, 80, 40), new_rect, 3, border_radius=12)
 
  
     arrow_move = 0  # ثابت
@@ -697,29 +698,48 @@ def intro():
 
     # 🪟 البوكس الشفاف
     panel = pygame.Surface((700, 300), pygame.SRCALPHA)
-    panel.fill((20, 30, 50, 180))  # شفاف غامق
+    panel.fill((25, 15, 5, 160))  # شفاف غامق
 
     screen.blit(panel, (250, 180))
 
-    pygame.draw.rect(screen, (255,255,255), (250,180,700,300), 2, border_radius=20)
+    pygame.draw.rect(screen, (255,220,150), (250,180,700,300), 2, border_radius=20)
 
-    # --------------------------
     # TITLE
-    # --------------------------
-    title = title_font.render("Journey Into Ancient Egypt", True, WHITE)
+    title_text = "Journey Into Ancient Egypt"
+
+    shadow = title_font.render(title_text, True, (0,0,0))
+    screen.blit(shadow, (302, 232))
+
+    glow = title_font.render(title_text, True, ACCENT)
+    screen.blit(glow, (298, 228))
+
+    title = title_font.render(title_text, True, GOLD)
     screen.blit(title, (300, 230))
 
-    # --------------------------
+
     # SUBTITLE
-    # --------------------------
-    sub = mid_font.render("Where Legends Were Carved in Stone", True, (230,230,230))
+    sub = mid_font.render(
+        "Where Legends Were Carved in Stone",
+        True,
+        (220,200,150)
+    )
     screen.blit(sub, (320, 300))
 
-    # --------------------------
+
     # START TEXT
-    # --------------------------
-    start = mid_font.render("Press SPACE to Begin Your Exploration", True, (240,240,240))
-    screen.blit(start, (350, 370))
+    part1 = mid_font.render("Press ", True, TEXT_LIGHT)
+    space = mid_font.render("SPACE", True, ACCENT)
+    part2 = mid_font.render(" to Begin Your Journey", True, TEXT_LIGHT)
+
+    total_w = part1.get_width() + space.get_width() + part2.get_width()
+    start_x = WIDTH//2 - total_w//2
+
+    y = 370
+
+    screen.blit(part1, (start_x, y))
+    screen.blit(space, (start_x + part1.get_width(), y))
+    screen.blit(part2, (start_x + part1.get_width() + space.get_width(), y))
+
 def pyramids_overview():
     global overview_played
 
@@ -734,7 +754,7 @@ def pyramids_overview():
 
     pyramid(800, 540, 180, 140, MAIN_PYRAMID_COLOR, sunx)
 
-    screen.blit(big_font.render("Giza Pyramids", True, WHITE), (495, 40))
+    screen.blit(big_font.render("Giza Pyramids", True, (255,220,140)), (495, 40))
 
     button("Press RIGHT → Go to Khufu")  
   
@@ -752,7 +772,7 @@ def khufu():
     bubble([
         '''The Great Pyramid of Khufu, the only surviving Wonder of the Ancient World. Its built from over 2.3 million stone blocks, some weighing up to 15 tons! For nearly 4,000 years, it was the tallest structure on Earth. Most impressively, its base is perfectly aligned with the four cardinal points with incredible precision. Its not just a tomb; its a timeless miracle of Egyptian engineering that still baffles the world today'''], gx + 200, gy - 140)
 
-    screen.blit(big_font.render("Scene 1 : Khufu", True, WHITE), (440,40))
+    screen.blit(big_font.render("Khufu", True, (255,220,140)), (440,40))
 
     button("RIGHT ARROW → Next")
 def khafre():
@@ -767,7 +787,7 @@ def khafre():
     bubble(['''Now, let’s look at the Pyramid of Khafre, the second-largest pyramid in Giza.You can easily recognize it by the original casing stones still clinging to its peak, giving us a glimpse of how polished and shining these pyramids once looked. Although it appears taller than Khufu’s, it’s actually slightly shorter but built on higher ground. Right next to it stands its legendary guardian, the Great Sphinx, carved from a single ridge of limestone. It remains a magnificent symbol of power and royal majesty."'''
     ], gx + 200, gy - 170)
 
-    screen.blit(big_font.render("Scene 2 : Khafre", True, WHITE), (440,40))
+    screen.blit(big_font.render("Khafre", True, (255,220,140)), (440,40))
 
     button("RIGHT ARROW → Next")
 # ---------------------------------------------------------------
@@ -845,24 +865,37 @@ def menkaure():
     bubble(['''Lastly, we reach the Pyramid of Menkaure, the smallest of the three main pyramids,but uniquely beautiful. What makes it truly special is the granite casing at its base;unlike the others, Menkaure chose expensive, hard granite brought all the way from Aswan.Despite its smaller size, its construction is incredibly precise, showing a shift towards more refined architectural details. Next to it, you can see the three Queen's Pyramids, making this spot a perfect ending to our journey through the divine Giza plateau."'''
     ], gx + 200, gy - 140)
 
-    screen.blit(big_font.render("Scene 3 : Menkaure", True, WHITE), (410,40))
+    screen.blit(big_font.render("Menkaure", True, (255,220,140)), (410,40))
 
     button("RIGHT ARROW → Finish")
 
 def ending():
-    base_world()
+
+    # 🖼️ الخلفية الجديدة
+    screen.blit(end_bg, (0, 0))
 
     audio.play_once("end")
-    screen.blit(title_font.render("Thank u for joining our virtual tour of", True, WHITE),
-                (210, 270))
 
-    screen.blit(title_font.render("The Great Pyramids ♥", True, WHITE),
-                (400, 360))
+    # ✨ overlay خفيف عشان النص يبان
+    overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+    overlay.fill((0, 0, 0, 120))
+    screen.blit(overlay, (0, 0))
 
-    screen.blit(big_font.render("History Still Breathes Here", True, GOLD),
-                (430, 450))
+    # 🎉 العنوان
+    title = title_font.render("Thank you for joining", True, (255, 220, 120))
+    screen.blit(title, title.get_rect(center=(WIDTH//3,300)))
 
-    button("Press R to Restart")
+    title = title_font.render("our virtual tour of", True, (255, 220, 120))
+    screen.blit(title, title.get_rect(center=(WIDTH//3, 360)))
+
+    title = title_font.render("The Great Pyramids ♥", True, (255, 220, 120))
+    screen.blit(title, title.get_rect(center=(WIDTH//3, 430)))
+
+    msg2 = mid_font.render("History still breathes here", True, (220,200,150))
+    screen.blit(msg2, msg2.get_rect(center=(WIDTH//3, 500)))
+
+    # 🔘 زر
+    button("Press R to Restart", WIDTH//2 - 180, 600)
 # INTERIOR FUNCTIONS
 # ---------------------------------------------------------------
 def torch_flame(x,y):
