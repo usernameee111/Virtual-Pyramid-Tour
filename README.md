@@ -11,7 +11,7 @@ Users are guided through dynamic scenes featuring the Pyramids of Khufu, Khafre,
 * **Immersive Transitions:** A dynamic zoom-in effect that transports the user from the exterior plateau into the atmospheric interior of the King's Chamber.
 * **Dynamic Environment:** Features a mathematical sun trajectory, procedural floating dust particles, and dynamic shadow rendering based on light position.
 
-## ⚙️ Technical Implementations (Under the Hood)
+## ⚙️ Technical Implementations 
 * **DDA & Bresenham's Line Algorithms:** Custom-built functions for precise pixel-by-pixel line drawing.
 * **Midpoint Circle Algorithm:** Used for rendering smooth, filled celestial objects and character elements.
 * **Scanline Triangle Fill:** Custom polygon filling logic used to architect the pyramid structures layer by layer.
