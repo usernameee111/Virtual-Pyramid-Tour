@@ -25,7 +25,7 @@ Users are guided through dynamic scenes featuring the Pyramids of Khufu, Khafre,
    ```bash
    git clone (https://github.com/usernameee111/Virtual-Pyramid-Tour.git)
 
-```
+
 
 2. Navigate to the project directory:
 ```bash
@@ -74,7 +74,5 @@ python train.py
 * **Mariam Farhat** 
 
 ```
-
-لو معاكِ لينك لـ GitHub Repo واسم زمايلك، ضيفيهم في الريدمي وتوكلي على الله انشريه!
 
 ```
