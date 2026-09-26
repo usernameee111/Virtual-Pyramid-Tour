@@ -73,6 +73,5 @@ python train.py
 * **Shrouk Mohammed Eissa** 
 * **Mariam Farhat** 
 
-```
 
 ```
